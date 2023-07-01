@@ -49,13 +49,13 @@ class DarkGateway:
             - Ity is essential notice that it is important to configure the smart contract
         """
         assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
-        self.__deployed_contracts_config = deployed_contracts_config
+        # self.__deployed_contracts_config = deployed_contracts_config
 
         contracts_dict = {}
-        for k in list(self.__deployed_contracts_config.keys()):
+        for k in list(deployed_contracts_config.keys()):
             if k != 'DEFAULT':
-                addr = self.__deployed_contracts_config[k]['addr']
-                c_abi = ast.literal_eval(self.__deployed_contracts_config[k]['abi'])['abi']
+                addr = deployed_contracts_config[k]['addr']
+                c_abi = ast.literal_eval(deployed_contracts_config[k]['abi'])['abi']
                 contracts_dict[k] = self.w3.eth.contract(address=addr, abi=c_abi)
 
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
