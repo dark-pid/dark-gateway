@@ -14,9 +14,9 @@ VERSION = '{{VERSION_PLACEHOLDER}}'
 # VERSION = '0.0.1'
 
 # CHANGEME VARS
-PACKAGE_NAME = "dark-web3-lib"
-DESCRIPTION = 'dARK web3 libs'
-LONG_DESCRIPTION = 'Sample project for automatic releases to PyPi'
+PACKAGE_NAME = "darkgw"
+DESCRIPTION = 'dARK Gateway'
+LONG_DESCRIPTION = 'dARK web3 libs to connect applications to the dARK'
 AUTHOR_NAME = "Thiago Nóbrega"
 AUTHOR_EMAIL = "thiagonobrega@gmail.com"
 PROJECT_URL = "https://github.com/dark-pid/dark-web3-lib"
