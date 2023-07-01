@@ -19,7 +19,7 @@ from web3.middleware import geth_poa_middleware
 from web3.providers.eth_tester import EthereumTesterProvider
 
 
-class w3dark:
+class DarkGateway:
     def __init__(self, blockchain_net_name: str,
                  blockchain_config: configparser.SectionProxy,
                  deployed_contracts_config:configparser.ConfigParser):

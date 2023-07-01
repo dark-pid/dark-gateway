@@ -1,1 +1,1 @@
-name = 'dark-web3-lib'
+from .core import DarkGateway
