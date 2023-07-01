@@ -14,8 +14,8 @@ VERSION = '{{VERSION_PLACEHOLDER}}'
 # VERSION = '0.0.1'
 
 # CHANGEME VARS
-PACKAGE_NAME = "darkgw"
-DESCRIPTION = 'dARK Gateway'
+PACKAGE_NAME = "dark-gateway"
+DESCRIPTION = 'dARK Gateway libs'
 LONG_DESCRIPTION = 'dARK web3 libs to connect applications to the dARK'
 AUTHOR_NAME = "Thiago Nóbrega"
 AUTHOR_EMAIL = "thiagonobrega@gmail.com"
