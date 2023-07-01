@@ -30,14 +30,18 @@ class DarkGateway:
 
         # w3dark config parameter
         self.__blockchain_net_name = blockchain_net_name
-        self.__blockchain_config = blockchain_config
+        self.__blockchain_config = blockchain_config # could be removed
+
+        # blockchain exec params
+        self.__chain_id = int(blockchain_config['chain_id'])
+        self.__min_gas_price = int(blockchain_config['min_gas_price'])
+        self.__pk = blockchain_config['account_priv_key'] #FIXME: Possible security risk
         
         # important variables
-        self.w3 = self.__load_blockchain_driver(blockchain_net_name,blockchain_config)
-        self.__deployed_contracts_dicts = None
+        self.w3 =  self.__class__.load_blockchain_driver(blockchain_net_name,blockchain_config)
+        self.deployed_contracts_dict = None
 
-        # bc execution parameters
-        self.__chain_id,self.__min_gas_price,self.__pk = self.get_exec_parameters()
+        
 
         # account
         self.account = self.w3.eth.account.privateKeyToAccount(self.__pk)
@@ -59,8 +63,7 @@ class DarkGateway:
                 contracts_dict[k] = self.w3.eth.contract(address=addr, abi=c_abi)
 
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
-        # return contracts_dict
-        self.deployed_contracts = contracts_dict
+        self.deployed_contracts_dict = contracts_dict
         
     
     def get_exec_parameters(self):
@@ -70,17 +73,14 @@ class DarkGateway:
             - ming_gas_price
             - pk
         """
-        
-        chain_id = int(self.blockchain_conf['chain_id'])
-        min_gas_price = int(self.blockchain_conf['min_gas_price'])
-        pk = self.blockchain_conf['account_priv_key']
-        return chain_id,min_gas_price,pk
+        return self.__chain_id,self.__min_gas_price,self.__pk
 
 
     ###
     ### private methods
     ###
-    def __load_blockchain_driver(blockchain_net_name: str,blockchain_config: configparser.SectionProxy) -> Web3:
+    @staticmethod
+    def load_blockchain_driver(blockchain_net_name: str,blockchain_config: configparser.SectionProxy) -> Web3:
         """
             Load the blockchain driver.
 
@@ -92,6 +92,7 @@ class DarkGateway:
         
         #debug
         # logging.info(config_file)
+        w3 = None
 
         if blockchain_net_name == 'EthereumTesterPyEvm':
             raise(Exception("Not Suported"))
@@ -101,7 +102,9 @@ class DarkGateway:
             # blockchain_config['url']
             w3 = Web3(Web3.HTTPProvider(blockchain_config['url']))
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-            return w3
+            # return w3
         else:
             raise RuntimeError('This shouldnt happend :: Not implemented')
+        
+        return w3
 
