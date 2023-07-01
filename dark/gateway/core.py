@@ -37,7 +37,14 @@ class DarkGateway:
         # important variables
         self.w3 = self.__load_blockchain_driver(blockchain_net_name,blockchain_config)
         self.__deployed_contracts_dicts = None
-    
+
+        # bc execution parameters
+        self.__chain_id,self.__min_gas_price,self.__pk = self.get_exec_parameters()
+
+        # account
+        self.account = self.w3.eth.account.privateKeyToAccount(self.__pk)
+
+  
     def load_deployed_smart_contracts(self):
         """
             Load the deployed smart contracts
