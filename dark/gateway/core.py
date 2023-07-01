@@ -53,6 +53,19 @@ class DarkGateway:
 
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
         return contracts_dict
+    
+    def get_exec_parameters(self):
+        """
+            Return the blockchain execution parameters
+            - chain_id
+            - ming_gas_price
+            - pk
+        """
+        
+        chain_id = int(self.blockchain_conf['chain_id'])
+        min_gas_price = int(self.blockchain_conf['min_gas_price'])
+        pk = self.blockchain_conf['account_priv_key']
+        return chain_id,min_gas_price,pk
 
 
     ###
