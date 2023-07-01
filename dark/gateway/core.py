@@ -21,19 +21,17 @@ from web3.providers.eth_tester import EthereumTesterProvider
 
 class DarkGateway:
     def __init__(self, blockchain_net_name: str,
-                 blockchain_config: configparser.SectionProxy,
-                 deployed_contracts_config:configparser.ConfigParser):
+                 blockchain_config: configparser.SectionProxy):
         
         #TODO: MODIFY CONSTRUCTOR PARAMATERS
         assert type(blockchain_net_name) == str, "blockchain_net_name must be str type"
         assert type(blockchain_config) == configparser.SectionProxy, "blockchain_config must be configparser.SectionProxy type"
-        assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
+        
 
         # w3dark config parameter
         self.__blockchain_net_name = blockchain_net_name
         self.__blockchain_config = blockchain_config
-        self.__deployed_contracts_config = deployed_contracts_config
-
+        
         # important variables
         self.w3 = self.__load_blockchain_driver(blockchain_net_name,blockchain_config)
         self.__deployed_contracts_dicts = None
@@ -45,11 +43,13 @@ class DarkGateway:
         self.account = self.w3.eth.account.privateKeyToAccount(self.__pk)
 
   
-    def load_deployed_smart_contracts(self):
+    def load_deployed_smart_contracts(self,deployed_contracts_config:configparser.ConfigParser):
         """
             Load the deployed smart contracts
             - Ity is essential notice that it is important to configure the smart contract
         """
+        assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
+        self.__deployed_contracts_config = deployed_contracts_config
 
         contracts_dict = {}
         for k in list(self.__deployed_contracts_config.keys()):
@@ -59,7 +59,9 @@ class DarkGateway:
                 contracts_dict[k] = self.w3.eth.contract(address=addr, abi=c_abi)
 
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
-        return contracts_dict
+        # return contracts_dict
+        self.deployed_contracts = contracts_dict
+        
     
     def get_exec_parameters(self):
         """
