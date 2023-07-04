@@ -20,6 +20,7 @@ from web3.providers.eth_tester import EthereumTesterProvider
 
 
 class DarkGateway:
+
     def __init__(self, blockchain_net_name: str,
                  blockchain_config: configparser.SectionProxy):
         
@@ -28,24 +29,27 @@ class DarkGateway:
         assert type(blockchain_config) == configparser.SectionProxy, "blockchain_config must be configparser.SectionProxy type"
         
 
-        # w3dark config parameter
+        ### w3dark config parameter
         self.__blockchain_net_name = blockchain_net_name
         self.__blockchain_config = blockchain_config # could be removed
 
-        # blockchain exec params
+        ### blockchain exec params
         self.__chain_id = int(blockchain_config['chain_id'])
         self.__min_gas_price = int(blockchain_config['min_gas_price'])
         self.__pk = blockchain_config['account_priv_key'] #FIXME: Possible security risk
-        
-        # important variables
+        self.min_gas_price = '100' #FIXME: add configuration parameter
+
+        ### important variables
         self.w3 =  self.__class__.load_blockchain_driver(blockchain_net_name,blockchain_config)
         self.deployed_contracts_dict = None
 
-        
-
-        # account
-        self.account = self.w3.eth.account.privateKeyToAccount(self.__pk)
-
+        ### account
+        self.__account = self.w3.eth.account.privateKeyToAccount(self.__pk)
+        # endereco da autoridade
+        #TODO: modelar utilizar  multiplas autoridades
+        #TODO: colocar como variavel de configuração
+        #FIXME: quando for necessario utilizar multiplas autoridades
+        self.authority_addr = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
   
     def load_deployed_smart_contracts(self,deployed_contracts_config:configparser.ConfigParser):
         """
@@ -65,6 +69,8 @@ class DarkGateway:
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
         self.deployed_contracts_dict = contracts_dict
         
+    def is_deployed_contract_loaded(self):
+        return self.deployed_contracts_dict != None
     
     def get_exec_parameters(self):
         """
@@ -74,6 +80,40 @@ class DarkGateway:
             - pk
         """
         return self.__chain_id,self.__min_gas_price,self.__pk
+    
+    ####
+    #### sing and send parameters
+    ####
+
+    def get_tx_params(self,gas):
+        """
+            Method employed to retrive the BC tx params
+        """
+                    #   w3,gas,account,chain_id=1337,min_gas_price='100'):
+        # nonce = w3.eth.getTransactionCount(acount.address)
+        nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
+        tx_params = {'from': self.__account.address,
+                    # 'to': contractAddress,
+                    'nonce': nonce,
+                    'gas': gas * 2,
+                    'gasPrice': self.w3.toWei(self.min_gas_price, 'gwei'), # defaul min gas price to besu (nao funciona w3.eth.gas_price)
+                    'chainId': self.__chain_id
+        }
+        return tx_params
+    
+    def signTransaction(self,smart_contract,method,*args):
+        #get the gas needed
+        est_gas = smart_contract.get_function_by_name(method)(*args).estimateGas()
+        print("-----")
+        print(est_gas)
+        print("-----")
+        tx_params = self.get_tx_params(est_gas)
+        #build the transaction
+        tx = smart_contract.get_function_by_name(method)(*args).buildTransaction(tx_params)
+        signed_tx = self.__account.signTransaction(tx)
+        return signed_tx
+    
+
 
 
     ###
