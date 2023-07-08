@@ -104,9 +104,6 @@ class DarkGateway:
     def signTransaction(self,smart_contract,method,*args):
         #get the gas needed
         est_gas = smart_contract.get_function_by_name(method)(*args).estimateGas()
-        print("-----")
-        print(est_gas)
-        print("-----")
         tx_params = self.get_tx_params(est_gas)
         #build the transaction
         tx = smart_contract.get_function_by_name(method)(*args).buildTransaction(tx_params)
