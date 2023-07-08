@@ -1,5 +1,7 @@
 from .gateway import DarkGateway
 from .util import invoke_contract_sync
+from .pid_modules import DarkPid
+
 
 class DarkMap:
     
@@ -52,5 +54,38 @@ class DarkMap:
         """
         return self.dpid_db.caller.get(dark_pid_hash)[1]
     
+    ###
+    ### Onchain core queries
+    ###
+
+    def get_pid_by_hash(self,dark_id):
+        """
+            Retrieves a persistent identifier (PID) by its hash value.
+
+            Parameters:
+                dark_id (str): The hash value of the PID.
+
+            Returns:
+                str: The PID associated with the given hash value.
+
+            Raises:
+                AssertionError: If the dark_id does not start with '0x'.
+        """
+        assert dark_id.startswith('0x'), "id is not hash"
+        dark_object = self.dpid_db.caller.get(dark_id)
+        return DarkPid.populateDark(dark_object,self.epid_db)
+
+    def get_pid_by_ark(self,dark_id):
+        """
+            Retrieves a persistent identifier (PID) by its ARK (Archival Resource Key) identifier.
+
+            Parameters:
+                dark_id (str): The ARK identifier of the PID.
+
+            Returns:
+                str: The PID associated with the given ARK identifier.
+        """
+        dark_object = self.dpid_db.caller.get_by_noid(dark_id)
+        return DarkPid.populateDark(dark_object,self.epid_db)
 
 
