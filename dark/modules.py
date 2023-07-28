@@ -38,8 +38,8 @@ class DarkMap:
             Request a PID and return the hash (address) of the PID
         """
         signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
-        r_tx, receipt = invoke_contract_sync(self.gw,signed_tx)
-        dark_id = r_tx['logs'][0]['topics'][1]
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        dark_id = receipt['logs'][0]['topics'][1]
         return dark_id
     
     def request_pid(self):
@@ -53,6 +53,9 @@ class DarkMap:
             Convert the dark_pid_hash to a ARK identifier
         """
         return self.dpid_db.caller.get(dark_pid_hash)[1]
+    
+    
+    
     
     ###
     ### Onchain core queries
