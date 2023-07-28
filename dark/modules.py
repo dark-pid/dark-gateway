@@ -1,5 +1,5 @@
 from .gateway import DarkGateway
-from .util import invoke_contract_sync
+from .util import invoke_contract_sync, invoke_contract_async
 from .pid_modules import DarkPid
 
 
@@ -28,7 +28,12 @@ class DarkMap:
         self.sets_service = dark_gateway.deployed_contracts_dict['SearchTermService.sol']
         self.auth_service = dark_gateway.deployed_contracts_dict['AuthoritiesService.sol']
     
-    
+    ###################################################################
+    ###################################################################
+    ###################### SYNC METHODS ###############################
+    ###################################################################
+    ###################################################################
+
     ###
     ### Request PID
     ###
@@ -48,6 +53,28 @@ class DarkMap:
         """
         return self.convert_pid_hash_to_ark(self.request_pid_hash())
     
+    ###################################################################
+    ###################################################################
+    ##################### ASYNC METHODS ###############################
+    ###################################################################
+    ###################################################################
+    
+    def async_request_pid_hash(self):
+        """
+            Request a PID and return the hash (address) of the PID
+        """
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        r_tx = invoke_contract_async(self.gw,signed_tx)
+        return r_tx
+
+
+
+    ###################################################################
+    ###################################################################
+    #####################  UTIL METHODS  ##############################
+    ###################################################################
+    ###################################################################
+
     def convert_pid_hash_to_ark(self,dark_pid_hash):
         """
             Convert the dark_pid_hash to a ARK identifier
