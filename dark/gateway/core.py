@@ -17,13 +17,21 @@ from web3.middleware import geth_poa_middleware
 
 # from eth_tester import PyEVMBackend
 from web3.providers.eth_tester import EthereumTesterProvider
+from web3.exceptions import TransactionNotFound
 
 
 class DarkGateway:
 
     def __init__(self, blockchain_net_name: str,
                  blockchain_config: configparser.SectionProxy):
-        
+        """
+        Constructor.
+
+        Args:
+            blockchain_net_name (str): The name of the blockchain network.
+            blockchain_config (configparser.SectionProxy): The blockchain configuration.
+        """
+
         #TODO: MODIFY CONSTRUCTOR PARAMATERS
         assert type(blockchain_net_name) == str, "blockchain_net_name must be str type"
         assert type(blockchain_config) == configparser.SectionProxy, "blockchain_config must be configparser.SectionProxy type"
@@ -55,6 +63,9 @@ class DarkGateway:
         """
             Load the deployed smart contracts
             - Ity is essential notice that it is important to configure the smart contract
+
+            Args:
+                deployed_contracts_config (configparser.ConfigParser): The deployed smart contracts configuration.
         """
         assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
         # self.__deployed_contracts_config = deployed_contracts_config
@@ -74,7 +85,10 @@ class DarkGateway:
     
     def get_exec_parameters(self):
         """
-            Return the blockchain execution parameters
+        Return the blockchain execution parameters.
+
+        Returns:
+            tuple: The blockchain execution parameters.
             - chain_id
             - ming_gas_price
             - pk
@@ -87,7 +101,13 @@ class DarkGateway:
 
     def get_tx_params(self,gas):
         """
-            Method employed to retrive the BC tx params
+        Method employed to retrive the BC tx params
+
+        Args:
+            gas (int): The gas limit for the transaction.
+
+        Returns:
+            dict: The transaction parameters.
         """
                     #   w3,gas,account,chain_id=1337,min_gas_price='100'):
         # nonce = w3.eth.getTransactionCount(acount.address)
@@ -102,6 +122,17 @@ class DarkGateway:
         return tx_params
     
     def signTransaction(self,smart_contract,method,*args):
+        """
+        Sign a transaction with the specified smart contract and method.
+
+        Args:
+            smart_contract (Contract): The smart contract to interact with.
+            method (str): The name of the method to call.
+            args (tuple): The arguments to pass to the method.
+
+        Returns:
+            Transaction: The signed transaction.
+        """
         #get the gas needed
         est_gas = smart_contract.get_function_by_name(method)(*args).estimateGas()
         tx_params = self.get_tx_params(est_gas)
@@ -110,8 +141,28 @@ class DarkGateway:
         signed_tx = self.__account.signTransaction(tx)
         return signed_tx
     
+    ####
+    #### transaction status
+    ####
 
+    def transaction_was_executed(self,tx_hash):
+        """
+        This function checks if a transaction was executed.
 
+        Args:
+            tx_hash (str/Hexbyte): The hash of the transaction to check.
+
+        Returns:
+            bool, TransactionReceipt: A tuple of whether the transaction was executed and the transaction receipt, if it was executed.
+
+        Raises:
+            TransactionNotFound: If the transaction was not found.
+        """
+        try:
+            tx_recipt = self.w3.eth.getTransactionReceipt(tx_hash)
+        except TransactionNotFound:
+            return False , None
+        return True , tx_recipt
 
     ###
     ### private methods
