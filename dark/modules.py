@@ -1,3 +1,5 @@
+from hexbytes.main import HexBytes
+
 from .gateway import DarkGateway
 from .util import invoke_contract_sync, invoke_contract_async
 from .pid_modules import DarkPid
@@ -53,6 +55,24 @@ class DarkMap:
         """
         return self.convert_pid_hash_to_ark(self.request_pid_hash())
     
+    def sync_set_external_pid(self,hash_pid: HexBytes,external_pid: str):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 'DOI' , external_pid)
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        return self.convert_pid_hash_to_ark(hash_pid)
+    
+    def sync_add_external_links(self,hash_pid: HexBytes,ext_url: str):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'add_externalLinks', hash_pid, ext_url)
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        return self.convert_pid_hash_to_ark(hash_pid)
+    
+    def sync_set_payload(self,hash_pid: HexBytes,pay_load: dict):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, str(pay_load) )
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        return self.convert_pid_hash_to_ark(hash_pid)
+    
     ###################################################################
     ###################################################################
     ##################### ASYNC METHODS ###############################
@@ -64,6 +84,38 @@ class DarkMap:
             Request a PID and return the hash (address) of the PID
         """
         signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        r_tx = invoke_contract_async(self.gw,signed_tx)
+        return r_tx
+    
+    def async_set_external_pid(self,hash_pid: HexBytes,external_pid: str):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 'GEN' , external_pid)
+        r_tx = invoke_contract_async(self.gw,signed_tx)
+        return r_tx
+    
+    def async_add_external_links(self,hash_pid: HexBytes,ext_url: str):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'add_externalLinks', hash_pid, ext_url)
+        r_tx = invoke_contract_async(self.gw,signed_tx)
+        return r_tx
+    
+    def async_set_payload(self,hash_pid: HexBytes,pay_load: dict):
+        
+        """
+        Asynchronously sets the payload of a PID.
+
+        Args:
+            hash_pid (HexBytes): The hash value of the PID.
+            pay_load (dict): The payload to be set.
+
+        Returns:
+            asyncio.Future: A future object that resolves to the transaction receipt.
+
+        Raises:
+            TypeError: If the hash_pid argument is not a HexBytes object.
+        """
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, str(pay_load) )
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
 

@@ -167,6 +167,11 @@ class DarkGateway:
     ###
     ### private methods
     ###
+    
+
+    ###
+    ### static methods
+    ###
     @staticmethod
     def load_blockchain_driver(blockchain_net_name: str,blockchain_config: configparser.SectionProxy) -> Web3:
         """
