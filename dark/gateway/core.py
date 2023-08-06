@@ -22,8 +22,7 @@ from web3.exceptions import TransactionNotFound
 
 class DarkGateway:
 
-    def __init__(self, blockchain_net_name: str,
-                 blockchain_config: configparser.SectionProxy):
+    def __init__(self, blockchain_config: configparser.SectionProxy):
         """
         Constructor.
 
@@ -33,31 +32,33 @@ class DarkGateway:
         """
 
         #TODO: MODIFY CONSTRUCTOR PARAMATERS
-        assert type(blockchain_net_name) == str, "blockchain_net_name must be str type"
-        assert type(blockchain_config) == configparser.SectionProxy, "blockchain_config must be configparser.SectionProxy type"
+        assert type(blockchain_config) == configparser.ConfigParser, "blockchain_config must be configparser.ConfigParser type"
         
 
         ### w3dark config parameter
-        self.__blockchain_net_name = blockchain_net_name
-        self.__blockchain_config = blockchain_config # could be removed
+        self.__blockchain_net_name = blockchain_config['base']['blockchain_net']
+        self.__blockchain_net_config = blockchain_config[self.__blockchain_net_name] # could be removed
+        self.__blockchain_base_config = blockchain_config['base']
+        self.__blockchain_smartcontracts_config = blockchain_config['smartcontracts']
 
         ### blockchain exec params
-        self.__chain_id = int(blockchain_config['chain_id'])
-        self.__min_gas_price = int(blockchain_config['min_gas_price'])
-        self.__pk = blockchain_config['account_priv_key'] #FIXME: Possible security risk
-        self.min_gas_price = '100' #FIXME: add configuration parameter
+        self.__chain_id = int(self.__blockchain_net_config['chain_id'])
+        self.__min_gas_price = int(self.__blockchain_net_config['min_gas_price'])
+        self.__pk = self.__blockchain_net_config['account_priv_key'] #FIXME: Possible security risk
+        self.min_gas_price = str(self.__blockchain_net_config['min_gas_price']) 
 
         ### important variables
-        self.w3 =  self.__class__.load_blockchain_driver(blockchain_net_name,blockchain_config)
+        self.w3 =  self.__class__.load_blockchain_driver(self.__blockchain_net_name,self.__blockchain_net_config)
+
+        #TODO INVOCAR METODO AQUI
         self.deployed_contracts_dict = None
 
         ### account
         self.__account = self.w3.eth.account.privateKeyToAccount(self.__pk)
         # endereco da autoridade
         #TODO: modelar utilizar  multiplas autoridades
-        #TODO: colocar como variavel de configuração
         #FIXME: quando for necessario utilizar multiplas autoridades
-        self.authority_addr = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
+        self.authority_addr = self.__blockchain_base_config['authority_addr']
   
     def load_deployed_smart_contracts(self,deployed_contracts_config:configparser.ConfigParser):
         """
@@ -82,6 +83,15 @@ class DarkGateway:
         
     def is_deployed_contract_loaded(self):
         return self.deployed_contracts_dict != None
+    
+    def get_blockchain_net_config(self):
+        return self.__blockchain_net_config
+    
+    def get_blockchain_base_config(self):
+        return self.__blockchain_base_config
+    
+    def get_blockchain_smartcontracts_config(self):
+        return self.__blockchain_smartcontracts_config
     
     def get_exec_parameters(self):
         """
@@ -164,10 +174,35 @@ class DarkGateway:
             return False , None
         return True , tx_recipt
 
+    
+    ###
+    ### deploy contracts
+    ###
+    def deploy_contract_besu(self,contract_interface):
+   
+        sc = self.w3.eth.contract( abi=contract_interface['abi'],
+                                bytecode=contract_interface['bin']
+                                )
+
+        est_gas = sc.constructor().estimateGas()
+        tx_const = sc.constructor().buildTransaction(self.get_tx_params(est_gas))
+        signed_tx = self.__account.signTransaction(tx_const)
+        tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+
+        tx_receipt = None
+        tx_receipt = self.w3.eth.waitForTransactionReceipt(tx_hash)
+
+        return tx_receipt['contractAddress']
+    
     ###
     ### private methods
     ###
+
+    def get_blockchain_config(self):
+        return self.__blockchain_net_config
     
+    def get_account_balance(self):
+        return Web3.fromWei(self.w3.eth.get_balance(self.__account.address),'ether')
 
     ###
     ### static methods
@@ -190,7 +225,7 @@ class DarkGateway:
         if blockchain_net_name == 'EthereumTesterPyEvm':
             raise(Exception("Not Suported"))
             # return Web3(EthereumTesterProvider(PyEVMBackend()))
-        elif 'dpi-' in blockchain_net_name:
+        elif 'dark-' in blockchain_net_name:
             # blockchain_config = config[blockchain_net_name]
             # blockchain_config['url']
             w3 = Web3(Web3.HTTPProvider(blockchain_config['url']))
