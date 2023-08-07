@@ -58,7 +58,7 @@ class DarkGateway:
         # endereco da autoridade
         #TODO: modelar utilizar  multiplas autoridades
         #FIXME: quando for necessario utilizar multiplas autoridades
-        self.authority_addr = self.__blockchain_base_config['authority_addr']
+        self.authority_addr = self.__account.address #self.__blockchain_base_config['authority_addr']
   
     def load_deployed_smart_contracts(self,deployed_contracts_config:configparser.ConfigParser):
         """
@@ -75,7 +75,7 @@ class DarkGateway:
         for k in list(deployed_contracts_config.keys()):
             if k != 'DEFAULT':
                 addr = deployed_contracts_config[k]['addr']
-                c_abi = ast.literal_eval(deployed_contracts_config[k]['abi'])['abi']
+                c_abi = ast.literal_eval(deployed_contracts_config[k]['abi'])#['abi']
                 contracts_dict[k] = self.w3.eth.contract(address=addr, abi=c_abi)
 
         # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
