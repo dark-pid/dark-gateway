@@ -40,7 +40,7 @@ class DarkMap:
     ### Request PID
     ###
 
-    def request_pid_hash(self):
+    def sync_request_pid_hash(self):
         """
             Request a PID and return the hash (address) of the PID
         """
@@ -49,11 +49,11 @@ class DarkMap:
         dark_id = receipt['logs'][0]['topics'][1]
         return dark_id
     
-    def request_pid(self):
+    def sync_request_pid(self):
         """
             Request a PID and return the ark of the PID
         """
-        return self.convert_pid_hash_to_ark(self.request_pid_hash())
+        return self.convert_pid_hash_to_ark(self.sync_request_pid_hash())
     
     def sync_set_external_pid(self,hash_pid: HexBytes,external_pid: str):
         assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
@@ -115,7 +115,7 @@ class DarkMap:
             TypeError: If the hash_pid argument is not a HexBytes object.
         """
         assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, str(pay_load) )
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, str(pay_load) )
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
 

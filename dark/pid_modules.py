@@ -1,15 +1,22 @@
 from web3 import Web3
+from hexbytes.main import HexBytes
 # from web3._utils.datatypes import Contract
 
 class DarkPid:
 
-    def __init__(self,pid_hash,ark_id,externa_pid_list,payload,owner) -> None:
-        self.pid_hash = pid_hash
+    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload,owner) -> None:
+        
+        if type(pid_hash) == HexBytes:
+            self.pid_hash = pid_hash
+        else:
+            self.pid_hash = HexBytes(pid_hash)
+
         self.ark = ark_id
         self.externa_pid_list = externa_pid_list
+        self.externa_url_list = externa_url_list
         self.payload = payload
         self.responsible = owner
-    
+
     def to_dict(self):
         """
         Converts the attributes of the class object into a dictionary.
@@ -71,9 +78,9 @@ class DarkPid:
             external_pids.append(pid_object)
         
         # deprecated
-        # external_links = []
-        # for ext_link in dark_object[5]:
-        #     external_links.append(ext_link)
+        externa_url_list = []
+        for ext_link in dark_object[5]:
+            externa_url_list.append(ext_link)
 
         pid_hash_id = Web3.toHex(dark_object[0])
         pid_ark_id = dark_object[1]
@@ -81,11 +88,9 @@ class DarkPid:
         owner = dark_object[-1]
         
 
-        return DarkPid(pid_hash_id,pid_ark_id,external_pids,payload,owner)
+        return DarkPid(pid_hash_id,pid_ark_id,external_pids,externa_url_list,payload,owner)
 
         
-
-
 class ExeternalPid:
     def __init__(self,id_hash,schema,value,creator) -> None:
         self.id = id_hash

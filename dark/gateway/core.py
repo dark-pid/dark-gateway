@@ -22,17 +22,19 @@ from web3.exceptions import TransactionNotFound
 
 class DarkGateway:
 
-    def __init__(self, blockchain_config: configparser.SectionProxy):
+    def __init__(self, blockchain_config: configparser.SectionProxy, deployed_contracts_config=None):
         """
         Constructor.
 
         Args:
-            blockchain_net_name (str): The name of the blockchain network.
             blockchain_config (configparser.SectionProxy): The blockchain configuration.
+            deployed_contracts_config (configparser.SectionProxy): Deployed contracts configuration.
         """
 
         #TODO: MODIFY CONSTRUCTOR PARAMATERS
         assert type(blockchain_config) == configparser.ConfigParser, "blockchain_config must be configparser.ConfigParser type"
+        if deployed_contracts_config!=None:
+            assert type(blockchain_config) == configparser.ConfigParser, "blockchain_config must be configparser.ConfigParser type"
         
 
         ### w3dark config parameter
@@ -50,8 +52,11 @@ class DarkGateway:
         ### important variables
         self.w3 =  self.__class__.load_blockchain_driver(self.__blockchain_net_name,self.__blockchain_net_config)
 
-        #TODO INVOCAR METODO AQUI
-        self.deployed_contracts_dict = None
+        #load smartcontracts
+        if deployed_contracts_config!=None:
+            self.deployed_contracts_dict = self.__class__.__load_deployed_smart_contracts(self.w3,deployed_contracts_config)
+        else:
+            self.deployed_contracts_dict = None
 
         ### account
         self.__account = self.w3.eth.account.privateKeyToAccount(self.__pk)
@@ -59,28 +64,8 @@ class DarkGateway:
         #TODO: modelar utilizar  multiplas autoridades
         #FIXME: quando for necessario utilizar multiplas autoridades
         self.authority_addr = self.__account.address #self.__blockchain_base_config['authority_addr']
-  
-    def load_deployed_smart_contracts(self,deployed_contracts_config:configparser.ConfigParser):
-        """
-            Load the deployed smart contracts
-            - Ity is essential notice that it is important to configure the smart contract
-
-            Args:
-                deployed_contracts_config (configparser.ConfigParser): The deployed smart contracts configuration.
-        """
-        assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
-        # self.__deployed_contracts_config = deployed_contracts_config
-
-        contracts_dict = {}
-        for k in list(deployed_contracts_config.keys()):
-            if k != 'DEFAULT':
-                addr = deployed_contracts_config[k]['addr']
-                c_abi = ast.literal_eval(deployed_contracts_config[k]['abi'])#['abi']
-                contracts_dict[k] = self.w3.eth.contract(address=addr, abi=c_abi)
-
-        # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
-        self.deployed_contracts_dict = contracts_dict
         
+
     def is_deployed_contract_loaded(self):
         return self.deployed_contracts_dict != None
     
@@ -235,4 +220,28 @@ class DarkGateway:
             raise RuntimeError('This shouldnt happend :: Not implemented')
         
         return w3
+    
+    @staticmethod
+    def __load_deployed_smart_contracts(w3,deployed_contracts_config:configparser.ConfigParser):
+        """
+            Load the deployed smart contracts
+            - Ity is essential notice that it is important to configure the smart contract
 
+            Args:
+                deployed_contracts_config (configparser.ConfigParser): The deployed smart contracts configuration.
+        """
+        assert type(deployed_contracts_config) == configparser.ConfigParser, "deployed_contracts_config must be configparser.ConfigParser type"
+        # self.__deployed_contracts_config = deployed_contracts_config
+
+        contracts_dict = {}
+        for k in list(deployed_contracts_config.keys()):
+            if k != 'DEFAULT':
+                addr = deployed_contracts_config[k]['addr']
+                c_abi = ast.literal_eval(deployed_contracts_config[k]['abi'])#['abi']
+                contracts_dict[k] = w3.eth.contract(address=addr, abi=c_abi)
+
+        # TODO: CHECK IF CONTRANCT DICT ARE EMPTY
+        if len(contracts_dict.keys()) == 0:
+            return None
+        
+        return contracts_dict
