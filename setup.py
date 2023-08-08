@@ -30,6 +30,10 @@ CLASSIFIERS = [
             "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Operating System :: OS Independent"]
 
+EXCLUDE_LIST = [
+            'docs.*',
+]
+
 setuptools.setup(
     name=PACKAGE_NAME,
     version=VERSION,
@@ -40,7 +44,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     # install_requires=REQUIRED_PACKAGES,
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=EXCLUDE_LIST),
     keywords=PROJECT_KEYWORDS,
     classifiers=CLASSIFIERS,
 )
