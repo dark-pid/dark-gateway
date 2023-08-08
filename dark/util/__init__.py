@@ -1,1 +1,1 @@
-from .core_bc_libs import invoke_contract_sync
+from .core_bc_libs import invoke_contract_sync, invoke_contract_async
