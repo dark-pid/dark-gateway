@@ -22,7 +22,7 @@ from web3.exceptions import TransactionNotFound
 
 class DarkGateway:
 
-    def __init__(self, blockchain_config: configparser.SectionProxy, deployed_contracts_config=None):
+    def __init__(self, blockchain_config: configparser.SectionProxy, deployed_contracts_config=None, account_private_key=None):
         """
         Constructor.
 
@@ -46,7 +46,11 @@ class DarkGateway:
         ### blockchain exec params
         self.__chain_id = int(self.__blockchain_net_config['chain_id'])
         self.__min_gas_price = int(self.__blockchain_net_config['min_gas_price'])
-        self.__pk = self.__blockchain_net_config['account_priv_key'] #FIXME: Possible security risk
+        
+        if account_private_key == None:
+            self.__pk = self.__blockchain_net_config['account_priv_key'] #FIXME: Possible security risk
+        else:
+            self.__pk = account_private_key
         self.min_gas_price = str(self.__blockchain_net_config['min_gas_price']) 
 
         ### important variables
