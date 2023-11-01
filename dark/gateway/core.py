@@ -104,7 +104,7 @@ class DarkGateway:
     ####
 
 
-    
+    # w3.eth.getTransactionCount(address, 'pending')
     def get_next_nonce(self,sender_address):
         """
         Method employed to retrive the nonce for a transactin
@@ -120,7 +120,13 @@ class DarkGateway:
 
         if self._current_block_number != latest_block_number:
             self._current_block_number = latest_block_number
-            self._nonce_calls_in_same_block = 0
+
+            #TODO CALL THIS FUNCTION IN PARALLEL (1s)
+            pending_tx = self.w3.eth.getTransactionCount(sender_address, 'pending')
+            normal_tx = self.w3.eth.getTransactionCount(sender_address)
+
+            if pending_tx == normal_tx:
+                self._nonce_calls_in_same_block = 0
 
 
         # current_nonce = self.w3.eth.getTransactionCount(sender_address, block_identifier=latest_block_number) + self._nonce_calls_in_same_block
