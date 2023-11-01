@@ -107,11 +107,14 @@ class DarkGateway:
     
     def get_next_nonce(self,sender_address):
         """
-        """
-        # self._current_block_number = self.w3.eth.blockNumber
-        # self._nonce_calls_in_same_block = 0
-        # nonlocal current_block_number, calls_in_same_block
+        Method employed to retrive the nonce for a transactin
 
+        Args:
+            sender_address (self.w3.toChecksumAddress(self.__account.address)): account.
+
+        Returns:
+            nonce
+        """
         # Obtenha o número do bloco mais recente
         latest_block_number = self.w3.eth.blockNumber
 
