@@ -68,6 +68,11 @@ class DarkGateway:
         #TODO: modelar utilizar  multiplas autoridades
         #FIXME: quando for necessario utilizar multiplas autoridades
         self.authority_addr = self.__account.address #self.__blockchain_base_config['authority_addr']
+
+
+        ## multipls nonce
+        self._current_block_number = self.w3.eth.blockNumber
+        self._nonce_calls_in_same_block = 0
         
 
     def is_deployed_contract_loaded(self):
@@ -98,6 +103,28 @@ class DarkGateway:
     #### sing and send parameters
     ####
 
+
+    
+    def get_next_nonce(self,sender_address):
+        """
+        """
+        # self._current_block_number = self.w3.eth.blockNumber
+        # self._nonce_calls_in_same_block = 0
+        # nonlocal current_block_number, calls_in_same_block
+
+        # Obtenha o número do bloco mais recente
+        latest_block_number = self.w3.eth.blockNumber
+
+        if self._current_block_number != latest_block_number:
+            self._current_block_number = latest_block_number
+            self._nonce_calls_in_same_block = 1
+
+
+        current_nonce = self.w3.eth.getTransactionCount(sender_address, block_identifier=latest_block_number) + self._nonce_calls_in_same_block
+        self._nonce_calls_in_same_block += 1
+
+        return current_nonce
+
     def get_tx_params(self,gas):
         """
         Method employed to retrive the BC tx params
@@ -110,7 +137,11 @@ class DarkGateway:
         """
                     #   w3,gas,account,chain_id=1337,min_gas_price='100'):
         # nonce = w3.eth.getTransactionCount(acount.address)
-        nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
+
+        # antigo
+        # nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
+        nonce = self.get_next_nonce(self.w3.toChecksumAddress(self.__account.address))
+
         tx_params = {'from': self.__account.address,
                     # 'to': contractAddress,
                     'nonce': nonce,
