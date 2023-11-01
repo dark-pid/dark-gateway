@@ -12,8 +12,8 @@ class DarkPid:
             self.pid_hash = HexBytes(pid_hash)
 
         self.ark = ark_id
-        self.externa_pid_list = externa_pid_list
-        self.externa_url = externa_url_list
+        self.external_pid_list = externa_pid_list
+        self.external_url = externa_url_list
         self.payload = payload
         self.responsible = owner
 

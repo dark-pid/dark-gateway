@@ -120,10 +120,11 @@ class DarkGateway:
 
         if self._current_block_number != latest_block_number:
             self._current_block_number = latest_block_number
-            self._nonce_calls_in_same_block = 1
+            self._nonce_calls_in_same_block = 0
 
 
-        current_nonce = self.w3.eth.getTransactionCount(sender_address, block_identifier=latest_block_number) + self._nonce_calls_in_same_block
+        # current_nonce = self.w3.eth.getTransactionCount(sender_address, block_identifier=latest_block_number) + self._nonce_calls_in_same_block
+        current_nonce = self.w3.eth.getTransactionCount(sender_address) + self._nonce_calls_in_same_block
         self._nonce_calls_in_same_block += 1
 
         return current_nonce
