@@ -49,6 +49,22 @@ class DarkMap:
         dark_id = receipt['logs'][0]['topics'][1]
         return dark_id
     
+    def bulk_request_pid_hash(self):
+        """
+            Request a PID and return the hash (address) of the PID
+        """
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'bulk_assingID', self.gw.authority_addr)
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        #retrieving pidhashs
+        pid_hashes = []
+        for i in range(len(receipt['logs'])):
+            try :
+                pid_hashes.append(receipt['logs'][i]['topics'][1])
+                # b = dm.convert_pid_hash_to_ark(pid_hash)
+            except IndexError:
+                pass
+        return pid_hashes
+    
     def sync_request_pid(self):
         """
             Request a PID and return the ark of the PID

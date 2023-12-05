@@ -12,11 +12,11 @@ import logging
 import ast
 import configparser
 
-from web3 import Web3, IPCProvider
+from web3 import Web3, Account
 from web3.middleware import geth_poa_middleware
 
 # from eth_tester import PyEVMBackend
-from web3.providers.eth_tester import EthereumTesterProvider
+# from web3.providers.eth_tester import EthereumTesterProvider
 from web3.exceptions import TransactionNotFound
 
 
@@ -72,7 +72,8 @@ class DarkGateway:
 
         ## multipls nonce
         self._current_block_number = self.w3.eth.blockNumber
-        self._nonce_calls_in_same_block = 0
+        self.__nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
+        self.__nonce_increment = 0
         
 
     def is_deployed_contract_loaded(self):
@@ -115,25 +116,33 @@ class DarkGateway:
         Returns:
             nonce
         """
+
+        # self.__nonce
         # Obtenha o número do bloco mais recente
         latest_block_number = self.w3.eth.blockNumber
 
+        flag = ''
+        #blocos diferentes
         if self._current_block_number != latest_block_number:
-            self._current_block_number = latest_block_number
+            flag = '!='
+            tx_count = self.w3.eth.getTransactionCount(sender_address)
 
-            #TODO CALL THIS FUNCTION IN PARALLEL (1s)
-            pending_tx = self.w3.eth.getTransactionCount(sender_address, 'pending')
-            normal_tx = self.w3.eth.getTransactionCount(sender_address)
-
-            if pending_tx == normal_tx:
-                self._nonce_calls_in_same_block = 0
-
-
-        # current_nonce = self.w3.eth.getTransactionCount(sender_address, block_identifier=latest_block_number) + self._nonce_calls_in_same_block
-        current_nonce = self.w3.eth.getTransactionCount(sender_address) + self._nonce_calls_in_same_block
-        self._nonce_calls_in_same_block += 1
-
-        return current_nonce
+            if tx_count == self.__nonce + self.__nonce_increment:
+                flag = 'limpei'
+                self.__nonce_increment = 1
+                self.__nonce = tx_count
+                # self.__nonce = self.__nonce
+                retorno = self.__nonce
+            else:
+                retorno = self.__nonce + self.__nonce_increment
+                self.__nonce_increment += 1
+        else: # dentro do mesmo bloco
+            flag = '=='
+            retorno = self.__nonce + self.__nonce_increment
+            self.__nonce_increment += 1
+        
+        # print(f"\t [{flag}] " + str(retorno))
+        return retorno
 
     def get_tx_params(self,gas):
         """
