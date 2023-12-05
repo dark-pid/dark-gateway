@@ -12,10 +12,11 @@ import logging
 import ast
 import configparser
 
+from web3 import Web3, Account
 from web3.middleware import geth_poa_middleware
 
 # from eth_tester import PyEVMBackend
-from web3.providers.eth_tester import EthereumTesterProvider
+# from web3.providers.eth_tester import EthereumTesterProvider
 from web3.exceptions import TransactionNotFound
 
 
