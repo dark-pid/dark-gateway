@@ -36,7 +36,6 @@ class DarkPid:
         Returns:
             bool: True if the output is valid, False otherwise.
         """
-
         if len(bc_output) != 6:
             return False
 
@@ -46,7 +45,7 @@ class DarkPid:
         if not isinstance(bc_output[2], list) or not isinstance(bc_output[3], bytes):
             return False
 
-        if not isinstance(bc_output[4], str):
+        if not isinstance(bc_output[4], bytes):
             return False
 
         return True
@@ -93,7 +92,23 @@ class DarkPid:
 
         pid_hash_id = Web3.toHex(dark_object[0])
         pid_ark_id = dark_object[1]
-        payload = dark_object[-2]
+        
+        # payload = dark_object[-2].hex().rstrip("0")
+        payload_hash = dark_object[-2]
+        # b'\x00' * 32 = 0
+        if payload_hash == b'\x00' * 32:
+            payload=''
+        else:
+            get_payload_schema = url_db_contract.get_function_by_signature('get_payload_schema(bytes32)')
+            get_payload = url_db_contract.get_function_by_signature('get_payload(bytes32)')
+            payload_obj = get_payload(Web3.toHex(payload_hash)).call()
+
+            payload_schema = get_payload_schema(Web3.toHex(payload_obj[0])).call()
+
+            print(payload_schema)
+
+            payload = 'TODO AJUSTAR'
+
         owner = dark_object[-1]
         
 
