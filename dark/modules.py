@@ -223,10 +223,13 @@ class DarkMap:
         payload_hash = dark_object[-2]
         # b'\x00' * 32 = 0
         if payload_hash != b'\x00' * 32:
-            Payload.populate()
+            payload_py_obj = self.get_payload(payload_hash)
+        else:
+            payload_py_obj = None
+            # Payload.populate(dark_object)
 
 
-        return DarkPid.populateDark(dark_object,self.epid_db,self.url_service)
+        return DarkPid.populate(dark_object,self.epid_db,self.url_service,payload_py_obj)
     
     ##
     ## PayloadSchema
@@ -235,7 +238,7 @@ class DarkMap:
     def get_payload_schema_by_hash(self,ps_id:bytes):
         #entra bytes32 a conversao e feita pelo web3
         # assert dark_id.startswith('0x'), "id is not hash"
-        dark_object = self.dpid_db.caller.get_payload_schema(Web3.toHex(bytes(ps_id)))
+        dark_object = self.dpid_db.caller.get_payload_schema(ps_id)
         return PayloadSchema.populate(dark_object)
     
     def get_payload_schema_by_name(self,schema_name:str):
@@ -246,7 +249,7 @@ class DarkMap:
     ## Payload
     ##
 
-    def get_payload_schema_by_hash(self,payload_hash_id):
+    def get_payload(self,payload_hash_id):
         # assert dark_id.startswith('0x'), "id is not hash"
         dark_object = self.dpid_db.caller.get_payload(Web3.toHex(payload_hash_id))
         payload_schema_hash_id = dark_object[0]

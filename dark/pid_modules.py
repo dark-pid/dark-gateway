@@ -4,7 +4,7 @@ from hexbytes.main import HexBytes
 
 class DarkPid:
 
-    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload,owner) -> None:
+    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload:dict,owner) -> None:
         
         if type(pid_hash) == HexBytes:
             self.pid_hash = pid_hash
@@ -50,7 +50,61 @@ class DarkPid:
 
         return True
 
+    def populate(dark_object,epid_db_contract,url_db_contract,payload_obj):
+        assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
+        # TODO: VALIDADE epid_db_contract
+        # assert type(epid_db_contract) == Contract, "epid_db_contract must be web3._utils.datatypes.Contract type"
 
+        # populate external pids
+        external_pids = []
+        for ext_pid in dark_object[2]:
+            ext_pid = Web3.toHex(ext_pid)
+            # epid = epid_db.functions.get(ext_pid).call()
+            get_func = epid_db_contract.get_function_by_signature('get(bytes32)')
+            epid = get_func(ext_pid).call()
+
+            pid_object = {'hash_id': ext_pid, 
+                            'value' : epid[2], 
+                            'owner:' : epid[-1]
+                        }
+            external_pids.append(pid_object)
+        
+        # deprecated
+
+        zbytes32 = dark_object[3].hex().rstrip("0")
+        if len(zbytes32) % 2 != 0:
+            zbytes32 = zbytes32 + '0'
+        try:    
+            zbytes32 = bytes.fromhex(zbytes32).decode('utf8')
+            externa_url_list = ''
+        except UnicodeDecodeError:
+            get_url = url_db_contract.get_function_by_signature('get(bytes32)')
+            url_obj = get_url(Web3.toHex(dark_object[3])).call()
+            externa_url_list = url_obj[2]
+
+        # if len(zbytes32) != 0:
+        #     externa_url_list = zbytes32
+        # else:
+        #     externa_url_list = ''
+        # for ext_link in dark_object[3]:
+        #     externa_url_list.append(ext_link)
+
+        pid_hash_id = Web3.toHex(dark_object[0])
+        pid_ark_id = dark_object[1]
+        
+        # payload = dark_object[-2].hex().rstrip("0")
+        # payload_hash = dark_object[-2]
+
+        payload = {}
+        if payload_obj != None:
+            payload = payload_obj.attributes
+        #TODO: CRIAR O SCHEMA
+
+        owner = dark_object[-1]
+        
+
+        return DarkPid(pid_hash_id,pid_ark_id,external_pids,externa_url_list,payload,owner)
+    
     def populateDark(dark_object,epid_db_contract,url_db_contract):
         assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
         # TODO: VALIDADE epid_db_contract
@@ -168,7 +222,7 @@ class PayloadSchema:
         return ps
 
 class Payload:
-    def __init__(self,schema_hash) -> None:
+    def __init__(self) -> None:
         self.payload_schema = None
         self.attributes = None
 
