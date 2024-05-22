@@ -1,8 +1,9 @@
+from web3 import Web3
 from hexbytes.main import HexBytes
 
 from .gateway import DarkGateway
 from .util import invoke_contract_sync, invoke_contract_async
-from .pid_modules import DarkPid
+from .pid_modules import DarkPid, PayloadSchema , Payload
 
 
 class DarkMap:
@@ -29,6 +30,8 @@ class DarkMap:
         self.epid_service = dark_gateway.deployed_contracts_dict['ExternalPIDService.sol']
         self.url_service = dark_gateway.deployed_contracts_dict['UrlService.sol']
         self.auth_service = dark_gateway.deployed_contracts_dict['AuthoritiesService.sol']
+        #payload schema name
+        self.payload_schema_name = dark_gateway.payload_schema_name
     
     ###################################################################
     ###################################################################
@@ -83,11 +86,43 @@ class DarkMap:
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         return self.convert_pid_hash_to_ark(hash_pid)
     
-    def sync_set_payload(self,hash_pid: HexBytes,pay_load: dict):
+    def sync_set_payload(self,hash_pid: HexBytes,payload: dict):
         assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, str(pay_load) )
-        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+
+        
+        try:
+            payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
+        except Exception as e:
+            raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
+    
+        # print(payload_schema.to_dict())
+        # valida se todos os atributos do payload estao no schema
+        self.validade_payload(payload,payload_schema)
+        # print(payload)
+        # print(payload.keys())
+
+        for p in payload.keys():      
+            att_n = str(p.upper())
+            att_v = str(payload[p])
+            # print('{}:{}'.format(att_n,att_v))
+            # print('-----------')
+                        
+            # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
+            signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
+                                                payload_schema.schema_name, att_n , att_v )
+            receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        
         return self.convert_pid_hash_to_ark(hash_pid)
+    
+    def validade_payload(self,payload: dict,payload_schema:PayloadSchema):
+        errors = []
+        for p in payload.keys():
+            if p.lower() not in payload_schema.attribute_list:
+                errors.append(p)
+        
+        if len(errors) > 0:
+            raise Exception(" Attributes {} not in PayloadSchema {}".format(errors,payload_schema.schema_name))
+        
     
     ###################################################################
     ###################################################################
@@ -184,6 +219,39 @@ class DarkMap:
                 str: The PID associated with the given ARK identifier.
         """
         dark_object = self.dpid_db.caller.get_by_noid(dark_id)
+
+        payload_hash = dark_object[-2]
+        # b'\x00' * 32 = 0
+        if payload_hash != b'\x00' * 32:
+            Payload.populate()
+
+
         return DarkPid.populateDark(dark_object,self.epid_db,self.url_service)
+    
+    ##
+    ## PayloadSchema
+    ##
+    
+    def get_payload_schema_by_hash(self,ps_id:bytes):
+        #entra bytes32 a conversao e feita pelo web3
+        # assert dark_id.startswith('0x'), "id is not hash"
+        dark_object = self.dpid_db.caller.get_payload_schema(Web3.toHex(bytes(ps_id)))
+        return PayloadSchema.populate(dark_object)
+    
+    def get_payload_schema_by_name(self,schema_name:str):
+        dark_object = self.dpid_db.caller.get_payload_schema(schema_name)
+        return PayloadSchema.populate(dark_object)
+    
+    ##
+    ## Payload
+    ##
+
+    def get_payload_schema_by_hash(self,payload_hash_id):
+        # assert dark_id.startswith('0x'), "id is not hash"
+        dark_object = self.dpid_db.caller.get_payload(Web3.toHex(payload_hash_id))
+        payload_schema_hash_id = dark_object[0]
+        payload_schema = self.get_payload_schema_by_hash(payload_schema_hash_id)
+        return Payload.populate(dark_object,payload_schema)
+
 
 

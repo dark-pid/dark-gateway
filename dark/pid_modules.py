@@ -96,16 +96,20 @@ class DarkPid:
         # payload = dark_object[-2].hex().rstrip("0")
         payload_hash = dark_object[-2]
         # b'\x00' * 32 = 0
-        if payload_hash == b'\x00' * 32:
+        if payload_hash != b'\x00' * 32:
             payload=''
+            print('0')
+            print(payload_hash)
         else:
-            get_payload_schema = url_db_contract.get_function_by_signature('get_payload_schema(bytes32)')
-            get_payload = url_db_contract.get_function_by_signature('get_payload(bytes32)')
-            payload_obj = get_payload(Web3.toHex(payload_hash)).call()
+            dp = DarkPid(pid_hash_id,pid_ark_id,external_pids,externa_url_list,'','')
+            # self
+            # get_payload_schema = url_db_contract.get_function_by_signature('get_payload_schema(bytes32)')
+            # get_payload = url_db_contract.get_function_by_signature('get_payload(bytes32)')
+            # payload_obj = get_payload(Web3.toHex(payload_hash)).call()
 
-            payload_schema = get_payload_schema(Web3.toHex(payload_obj[0])).call()
+            # payload_schema = get_payload_schema(Web3.toHex(payload_obj[0])).call()
 
-            print(payload_schema)
+            # print(payload_schema)
 
             payload = 'TODO AJUSTAR'
 
@@ -130,3 +134,63 @@ class ExeternalPid:
             dict: A dictionary representation of the class object's attributes.
         """
         return vars(self)
+    
+class PayloadSchema:
+    def __init__(self,schema_hash,schema_name:str,configured:bool) -> None:
+        self.id = schema_hash
+        self.schema_name = schema_name
+        self.attribute_list = []
+        self.configured = configured
+
+    def to_dict(self):
+        """
+        Converts the attributes of the class object into a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the class object's attributes.
+        """
+        return vars(self)
+    
+    @staticmethod
+    def populate(dark_object):
+        # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
+
+        schema_name = dark_object[0].lower()
+        att_list = dark_object[1]
+        confa = dark_object[2]
+        
+        ps = PayloadSchema('',schema_name,confa)
+        
+        if len(att_list) > 0:
+            for att in att_list:
+                ps.attribute_list.append(att.lower())
+
+        return ps
+
+class Payload:
+    def __init__(self,schema_hash) -> None:
+        self.payload_schema = None
+        self.attributes = None
+
+    def to_dict(self):
+        """
+        Converts the attributes of the class object into a dictionary.
+
+        Returns:
+            dict: A dictionary representation of the class object's attributes.
+        """
+        return vars(self)
+    
+    @staticmethod
+    def populate(dark_object, payload_schema:PayloadSchema):
+        # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
+        att_value_list = dark_object[1]
+        
+        payload = Payload()
+        payload.payload_schema = payload_schema
+
+        payload.attributes = {}
+        for i in range(len(att_value_list)):
+            payload.attributes[payload_schema.attribute_list[i]] = att_value_list[i]
+
+        return payload
