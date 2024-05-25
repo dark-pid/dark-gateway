@@ -35,19 +35,62 @@ class DarkMap:
     
     ###################################################################
     ###################################################################
+    #####################  INTERNAL METHODS  #########################
+    ###################################################################
+    ###################################################################
+    
+    def __request_pid_hash(self):
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        return signed_tx
+    
+    def __add_external_pid(self,hash_pid: HexBytes,external_pid: str,pid_shema:int):
+        # 0 doi
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        return self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, pid_shema , external_pid)
+    
+    def __set_url(self,hash_pid: HexBytes,ext_url: str):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        return self.gw.signTransaction(self.dpid_service , 'set_url', hash_pid, ext_url)
+    
+    def __set_payload(self,hash_pid: HexBytes,payload: dict):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+
+        try:
+            payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
+        except Exception as e:
+            raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
+        
+        # valida se todos os atributos do payload estao no schema
+        self.validade_payload(payload,payload_schema)
+
+        signed_tx_set = []
+        
+        for p in payload.keys():      
+            att_n = str(p.upper())
+            att_v = str(payload[p])
+            # print('{}:{}'.format(att_n,att_v))
+            # print('-----------')
+                        
+            # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
+            signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
+                                                payload_schema.schema_name, att_n , att_v )
+            signed_tx_set.append(signed_tx)
+        
+        return signed_tx_set      
+    
+
+    ###################################################################
+    ###################################################################
     ###################### SYNC METHODS ###############################
     ###################################################################
     ###################################################################
-
-    ###
-    ### Request PID
-    ###
 
     def sync_request_pid_hash(self):
         """
             Request a PID and return the hash (address) of the PID
         """
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        signed_tx = self.__request_pid_hash()
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         dark_id = receipt['logs'][0]['topics'][1]
         return dark_id
@@ -74,54 +117,29 @@ class DarkMap:
         """
         return self.convert_pid_hash_to_ark(self.sync_request_pid_hash())
     
-    def sync_add_external_pid(self,hash_pid: HexBytes,external_pid: str):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 0 , external_pid)
+    def sync_add_external_pid(self,hash_pid: HexBytes,external_pid: str,pid_schema=0):
+        # assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 0 , external_pid)
+        signed_tx = self.__add_external_pid(hash_pid,external_pid,pid_schema)
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         return self.convert_pid_hash_to_ark(hash_pid)
     
     def sync_set_url(self,hash_pid: HexBytes,ext_url: str):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_url', hash_pid, ext_url)
+        # assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_url', hash_pid, ext_url)
+        signed_tx = self.__set_url(hash_pid,ext_url)
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         return self.convert_pid_hash_to_ark(hash_pid)
     
     def sync_set_payload(self,hash_pid: HexBytes,payload: dict):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-
         
-        try:
-            payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
-        except Exception as e:
-            raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
-    
-        # print(payload_schema.to_dict())
-        # valida se todos os atributos do payload estao no schema
-        self.validade_payload(payload,payload_schema)
-        # print(payload)
-        # print(payload.keys())
-
-        for p in payload.keys():      
-            att_n = str(p.upper())
-            att_v = str(payload[p])
-            # print('{}:{}'.format(att_n,att_v))
-            # print('-----------')
-                        
-            # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
-            signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
-                                                payload_schema.schema_name, att_n , att_v )
+        tx_set = self.__set_payload(hash_pid,payload)
+        for signed_tx in tx_set:        
             receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         
         return self.convert_pid_hash_to_ark(hash_pid)
     
-    def validade_payload(self,payload: dict,payload_schema:PayloadSchema):
-        errors = []
-        for p in payload.keys():
-            if p.lower() not in payload_schema.attribute_list:
-                errors.append(p)
-        
-        if len(errors) > 0:
-            raise Exception(" Attributes {} not in PayloadSchema {}".format(errors,payload_schema.schema_name))
+
         
     
     ###################################################################
@@ -134,24 +152,26 @@ class DarkMap:
         """
             Request a PID and return the hash (address) of the PID
         """
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'assingID', self.gw.authority_addr)
+        signed_tx = self.__request_pid_hash()
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
     
-    def async_set_external_pid(self,hash_pid: HexBytes,external_pid: str):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 0 , external_pid)
+    def async_set_external_pid(self,hash_pid: HexBytes,external_pid: str,pid_schema=0):
+        # assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'addExternalPid', hash_pid, 0 , external_pid)
+        signed_tx = self.__add_external_pid(hash_pid,external_pid,pid_schema)
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
     
     def async_set_url(self,hash_pid: HexBytes,ext_url: str):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_url', hash_pid, ext_url)
+        # assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_url', hash_pid, ext_url)
+        signed_tx = self.__set_url(hash_pid,ext_url)
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
     
-    def async_set_payload(self,hash_pid: HexBytes,pay_load: dict):
-        
+    def async_set_payload(self,hash_pid: HexBytes,payload: dict):
         """
         Asynchronously sets the payload of a PID.
 
@@ -165,11 +185,13 @@ class DarkMap:
         Raises:
             TypeError: If the hash_pid argument is not a HexBytes object.
         """
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, str(pay_load) )
-        r_tx = invoke_contract_async(self.gw,signed_tx)
-        return r_tx
-
+        signed_tx_set = self.__set_payload(hash_pid,payload)
+        tx_addr_set = []
+        for signed_tx in signed_tx_set:        
+            r_tx = invoke_contract_async(self.gw,signed_tx)
+            tx_addr_set.append(r_tx)
+    
+        return tx_addr_set #r_tx
 
 
     ###################################################################
@@ -186,10 +208,11 @@ class DarkMap:
     
     
     
-    
-    ###
+    ###################################################################
+    ###################################################################
     ### Onchain core queries
-    ###
+    ###################################################################
+    ###################################################################
 
     def get_pid_by_hash(self,dark_id):
         """
@@ -206,7 +229,15 @@ class DarkMap:
         """
         assert dark_id.startswith('0x'), "id is not hash"
         dark_object = self.dpid_db.caller.get(dark_id)
-        return DarkPid.populateDark(dark_object,self.epid_db,self.url_service)
+        payload_hash = dark_object[-2]
+        # b'\x00' * 32 = 0
+        if payload_hash != b'\x00' * 32:
+            payload_py_obj = self.get_payload(payload_hash)
+        else:
+            payload_py_obj = None
+        
+        # return DarkPid.populateDark(dark_object,self.epid_db,self.url_service)
+        return DarkPid.populate(dark_object,self.epid_db,self.url_service,payload_py_obj)
 
     def get_pid_by_ark(self,dark_id):
         """
@@ -221,6 +252,7 @@ class DarkMap:
         dark_object = self.dpid_db.caller.get_by_noid(dark_id)
 
         payload_hash = dark_object[-2]
+        
         # b'\x00' * 32 = 0
         if payload_hash != b'\x00' * 32:
             payload_py_obj = self.get_payload(payload_hash)
@@ -255,6 +287,15 @@ class DarkMap:
         payload_schema_hash_id = dark_object[0]
         payload_schema = self.get_payload_schema_by_hash(payload_schema_hash_id)
         return Payload.populate(dark_object,payload_schema)
+    
+    def validade_payload(self,payload: dict,payload_schema:PayloadSchema):
+        errors = []
+        for p in payload.keys():
+            if p.lower() not in payload_schema.attribute_list:
+                errors.append(p)
+        
+        if len(errors) > 0:
+            raise Exception(" Attributes {} not in PayloadSchema {}".format(errors,payload_schema.schema_name))
 
 
 
