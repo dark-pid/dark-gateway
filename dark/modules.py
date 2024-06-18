@@ -283,7 +283,7 @@ class DarkMap:
 
     def get_payload(self,payload_hash_id):
         # assert dark_id.startswith('0x'), "id is not hash"
-        dark_object = self.dpid_db.caller.get_payload(Web3.toHex(payload_hash_id))
+        dark_object = self.dpid_db.caller.get_payload(Web3.to_hex(payload_hash_id))
         payload_schema_hash_id = dark_object[0]
         payload_schema = self.get_payload_schema_by_hash(payload_schema_hash_id)
         return Payload.populate(dark_object,payload_schema)

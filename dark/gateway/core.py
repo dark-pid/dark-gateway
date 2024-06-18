@@ -63,7 +63,9 @@ class DarkGateway:
             self.deployed_contracts_dict = None
 
         ### account
-        self.__account = self.w3.eth.account.privateKeyToAccount(self.__pk)
+        # self.__account = self.w3.eth.account.privateKeyToAccount(self.__pk)
+        self.__account = self.w3.eth.account.from_key(self.__pk)
+
         # endereco da autoridade
         #TODO: modelar utilizar  multiplas autoridades
         #FIXME: quando for necessario utilizar multiplas autoridades
@@ -71,8 +73,11 @@ class DarkGateway:
 
 
         ## multipls nonce
-        self._current_block_number = self.w3.eth.blockNumber
-        self.__nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
+        # self._current_block_number = self.w3.eth.blockNumber
+        # self._current_block_number = self.w3.eth.get_block('latest')['number']
+        self._current_block_number = self.w3.eth.get_block_number()
+        # get_transaction_count
+        self.__nonce = self.w3.eth.get_transaction_count(self.w3.to_checksum_address(self.__account.address))
         self.__nonce_increment = 0
 
         ## payload
@@ -108,7 +113,7 @@ class DarkGateway:
     ####
 
 
-    # w3.eth.getTransactionCount(address, 'pending')
+    # w3.eth.get_transaction_count(address, 'pending')
     def get_next_nonce(self,sender_address):
         """
         Method employed to retrive the nonce for a transactin
@@ -122,13 +127,14 @@ class DarkGateway:
 
         # self.__nonce
         # Obtenha o número do bloco mais recente
-        latest_block_number = self.w3.eth.blockNumber
+        # latest_block_number = self.w3.eth.blockNumber
+        latest_block_number = self.w3.eth.get_block_number()
 
         flag = ''
         #blocos diferentes
         if self._current_block_number != latest_block_number:
             flag = '!='
-            tx_count = self.w3.eth.getTransactionCount(sender_address)
+            tx_count = self.w3.eth.get_transaction_count(sender_address)
 
             if tx_count == self.__nonce + self.__nonce_increment:
                 flag = 'limpei'
@@ -161,14 +167,14 @@ class DarkGateway:
         # nonce = w3.eth.getTransactionCount(acount.address)
 
         # antigo
-        # nonce = self.w3.eth.getTransactionCount(self.w3.toChecksumAddress(self.__account.address))
-        nonce = self.get_next_nonce(self.w3.toChecksumAddress(self.__account.address))
+        # nonce = self.w3.eth.get_transaction_count(self.w3.toChecksumAddress(self.__account.address))
+        nonce = self.get_next_nonce(self.w3.to_checksum_address(self.__account.address))
 
         tx_params = {'from': self.__account.address,
                     # 'to': contractAddress,
                     'nonce': nonce,
                     'gas': gas * 2,
-                    'gasPrice': self.w3.toWei(self.min_gas_price, 'gwei'), # defaul min gas price to besu (nao funciona w3.eth.gas_price)
+                    'gasPrice': self.w3.to_wei(self.min_gas_price, 'gwei'), # defaul min gas price to besu (nao funciona w3.eth.gas_price)
                     'chainId': self.__chain_id
         }
         return tx_params
@@ -186,11 +192,11 @@ class DarkGateway:
             Transaction: The signed transaction.
         """
         #get the gas needed
-        est_gas = smart_contract.get_function_by_name(method)(*args).estimateGas()
+        est_gas = smart_contract.get_function_by_name(method)(*args).estimate_gas()
         tx_params = self.get_tx_params(est_gas)
         #build the transaction
-        tx = smart_contract.get_function_by_name(method)(*args).buildTransaction(tx_params)
-        signed_tx = self.__account.signTransaction(tx)
+        tx = smart_contract.get_function_by_name(method)(*args).build_transaction(tx_params)
+        signed_tx = self.__account.sign_transaction(tx)
         return signed_tx
     
     ####
@@ -211,7 +217,8 @@ class DarkGateway:
             TransactionNotFound: If the transaction was not found.
         """
         try:
-            tx_recipt = self.w3.eth.getTransactionReceipt(tx_hash)
+            # tx_recipt = self.w3.eth.getTransactionReceipt(tx_hash)
+            tx_recipt = self.w3.eth.get_transaction_receipt(tx_hash)
         except TransactionNotFound:
             return False , None
         return True , tx_recipt
@@ -268,9 +275,12 @@ class DarkGateway:
             raise(Exception("Not Suported"))
             # return Web3(EthereumTesterProvider(PyEVMBackend()))
         elif 'dark-' in blockchain_net_name:
-            # blockchain_config = config[blockchain_net_name]
-            # blockchain_config['url']
+            # adapter = requests.adapters.HTTPAdapter(pool_connections=20, pool_maxsize=20)
+            # session = requests.Session()
+            # session.mount('http://', adapter)
+            # session.mount('https://', adapter)
             w3 = Web3(Web3.HTTPProvider(blockchain_config['url']))
+            #poa
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
             # return w3
         else:

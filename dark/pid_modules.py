@@ -58,7 +58,7 @@ class DarkPid:
         # populate external pids
         external_pids = []
         for ext_pid in dark_object[2]:
-            ext_pid = Web3.toHex(ext_pid)
+            ext_pid = Web3.to_hex(ext_pid)
             # epid = epid_db.functions.get(ext_pid).call()
             get_func = epid_db_contract.get_function_by_signature('get(bytes32)')
             epid = get_func(ext_pid).call()
@@ -79,7 +79,7 @@ class DarkPid:
             externa_url_list = ''
         except UnicodeDecodeError:
             get_url = url_db_contract.get_function_by_signature('get(bytes32)')
-            url_obj = get_url(Web3.toHex(dark_object[3])).call()
+            url_obj = get_url(Web3.to_hex(dark_object[3])).call()
             externa_url_list = url_obj[2]
 
         # if len(zbytes32) != 0:
@@ -89,7 +89,7 @@ class DarkPid:
         # for ext_link in dark_object[3]:
         #     externa_url_list.append(ext_link)
 
-        pid_hash_id = Web3.toHex(dark_object[0])
+        pid_hash_id = Web3.to_hex(dark_object[0])
         pid_ark_id = dark_object[1]
         
         # payload = dark_object[-2].hex().rstrip("0")
@@ -113,7 +113,7 @@ class DarkPid:
         # populate external pids
         external_pids = []
         for ext_pid in dark_object[2]:
-            ext_pid = Web3.toHex(ext_pid)
+            ext_pid = Web3.to_hex(ext_pid)
             # epid = epid_db.functions.get(ext_pid).call()
             get_func = epid_db_contract.get_function_by_signature('get(bytes32)')
             epid = get_func(ext_pid).call()
@@ -134,7 +134,7 @@ class DarkPid:
             externa_url_list = ''
         except UnicodeDecodeError:
             get_url = url_db_contract.get_function_by_signature('get(bytes32)')
-            url_obj = get_url(Web3.toHex(dark_object[3])).call()
+            url_obj = get_url(Web3.to_hex(dark_object[3])).call()
             externa_url_list = url_obj[2]
 
         # if len(zbytes32) != 0:
@@ -144,7 +144,7 @@ class DarkPid:
         # for ext_link in dark_object[3]:
         #     externa_url_list.append(ext_link)
 
-        pid_hash_id = Web3.toHex(dark_object[0])
+        pid_hash_id = Web3.to_hex(dark_object[0])
         pid_ark_id = dark_object[1]
         
         # payload = dark_object[-2].hex().rstrip("0")
@@ -159,9 +159,9 @@ class DarkPid:
             # self
             # get_payload_schema = url_db_contract.get_function_by_signature('get_payload_schema(bytes32)')
             # get_payload = url_db_contract.get_function_by_signature('get_payload(bytes32)')
-            # payload_obj = get_payload(Web3.toHex(payload_hash)).call()
+            # payload_obj = get_payload(Web3.to_hex(payload_hash)).call()
 
-            # payload_schema = get_payload_schema(Web3.toHex(payload_obj[0])).call()
+            # payload_schema = get_payload_schema(Web3.to_hex(payload_obj[0])).call()
 
             # print(payload_schema)
 
