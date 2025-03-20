@@ -1,70 +1,28 @@
 # dark-gateway
 
-dARK Web3 Core Lib
+The [dARK Python Library](https://github.com/dark-pid/dark-gateway) provides a convenient, low-level interface to interact directly with dARK smart contracts from your Python applications. This library supports various deployment scenarios, whether you are connecting to a public dARK network, a consortium network, or your own local/organizational deployment. With this library, you can:
 
-## How to use
+* **Mint new ARK identifiers:** Register new resources and obtain their corresponding ARK IDs.
+* **Resolve ARK identifiers:** Retrieve the metadata associated with a specific ARK ID.
+* **Manage metadata:** (If supported by your dARK instance) Update or extend the metadata of existing ARK IDs.
+* **Query the blockchain:** Access on-chain information, such as checking for the existence of an ARK ID, retrieving the owner of an ARK, and listing associated external PIDs.
 
-We created a [notebook](./docs/example_notebooks/basic_dark_usage.ipynb) to ilustrate how to use the dark-gateway lib
-
-
-## Main components
-
-### DarkGateway
-
-The DarkGateway class is a Python class that provides a simple interface to interact with the dARK blockchain. The class is initialized with the name of the blockchain network and the configuration file. The configuration file specifies the URL of the blockchain node, the chain ID, and the minimum gas price.
-
-Once the class is initialized, you can use it to send transactions, query the blockchain state, and interact with smart contracts. To send a transaction, you need to specify the smart contract, the method to call, and the arguments to pass to the method. The class will then sign the transaction and send it to the blockchain.
-
-To query the blockchain state, you can use the get_balance method to get the balance of an address, or the get_transaction_receipt method to get the receipt of a transaction.
-
-To interact with smart contracts, you can use the call method to call a function on a smart contract, or the transact method to send a transaction to a smart contract.
-
-The DarkGateway class is a powerful tool that can be used to interact with the Darkweb blockchain. It provides a simple and easy-to-use interface that makes it easy to send transactions, query the blockchain state, and interact with smart contracts.
-
-Here are some of the specific things that the DarkGateway class can do:
-
-- Send transactions
-- Query the blockchain state
-- Interact with smart contracts
-- Get the balance of an address
-- Get the receipt of a transaction
-- Call a function on a smart contract
-- Send a transaction to a smart contract
+The repository includes detailed documentation, installation instructions, and usage examples, making it the recommended approach for developers looking to build applications that require fine-grained control over dARK interactions or direct integration with blockchain logic. To connect to your instance, configure the library using your instance's `config.ini` and `deployed_contracts.ini` files, specifying the appropriate blockchain network and contract addresses.
 
 
-### DarkMap
-A Python class that provides a simple interface to interact with the Darkweb blockchain. It inherits from the `DarkGateway` class and adds some additional methods for interacting with the blockchain.
+## How to install
 
-#### Methods
+You can easily install the dARK Gateway library via `pip`. Run the following command in your terminal:
 
-The `DarkMap` class has two main types of methods:
-
-* **Sync methods:** These methods block until the operation is complete.
-* **Async methods:** These methods return a future object that can be used to get the result of the operation.
-
-The `DarkMap` class also has some utility methods for converting between different types of identifiers, such as the hash value of a PID and its ARK identifier.
-
-### Examples
-
-```python
->>> from darkmap import DarkMap
->>> darkmap = DarkMap(dark_gateway)
->>> darkmap.request_pid_hash()
-'0x1234567890abcdef'
->>> darkmap.get_pid_by_hash('0x1234567890abcdef')
+```bash
+pip install dark-gateway==0.1.6
 ```
 
 
-### Differences from DarkGateway
+## How to use
 
-The main difference between the `DarkMap` class and the `DarkGateway` class is that the `DarkMap` class provides some additional methods for interacting with the blockchain, such as the ability to request a PID and convert between different types of identifiers.
+We have created a [notebook](./docs/example_notebooks/basic_dark_usage.ipynb) to illustrate how to utilize the dARK Gateway library effectively. This notebook demonstrates the core functions of the library, providing practical examples for you to follow.
 
-Here is a table that summarizes the differences between the two classes:
+For more in-depth information and technical details, please refer to our comprehensive [technical documentation](docs/technical_overview.md). The intention is to enable developers to easily use this library to create new applications for dARK, fostering innovation and simplifying development processes.
 
-| Feature | DarkGateway | DarkMap |
-|---|---|---|
-| Can send transactions | Yes | Yes |
-| Can query the blockchain state | Yes | Yes |
-| Can interact with smart contracts | Yes | Yes |
-| Can request a PID | No | Yes |
-| Can convert between different types of identifiers | No | Yes |
+
