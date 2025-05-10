@@ -62,31 +62,31 @@ class DarkMap:
                                        'get_or_create_payload_schema',
                                        shcema_name, version, confiured)
    
-    # def __set_payload(self,hash_pid: HexBytes,payload: dict):
-    #     assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+    def __set_payload(self,hash_pid: HexBytes,payload_schema, payload):
+        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
 
-    #     try:
-    #         payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
-    #     except Exception as e:
-    #         raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
+        try:
+            payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
+        except Exception as e:
+            raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
         
-    #     # valida se todos os atributos do payload estao no schema
-    #     self.validade_payload(payload,payload_schema)
+        # valida se todos os atributos do payload estao no schema
+        self.validade_payload(payload,payload_schema)
 
-    #     signed_tx_set = []
+        signed_tx_set = []
         
-    #     for p in payload.keys():      
-    #         att_n = str(p.upper())
-    #         att_v = str(payload[p])
-    #         # print('{}:{}'.format(att_n,att_v))
-    #         # print('-----------')
+        for p in payload.keys():      
+            att_n = str(p.upper())
+            att_v = str(payload[p])
+            # print('{}:{}'.format(att_n,att_v))
+            # print('-----------')
                         
-    #         # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
-    #         signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
-    #                                             payload_schema.schema_name, att_n , att_v )
-    #         signed_tx_set.append(signed_tx)
+            # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
+            signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
+                                                payload_schema.schema_name, att_n , att_v )
+            signed_tx_set.append(signed_tx)
         
-    #     return signed_tx_set      
+        return signed_tx_set      
     
 
     ###################################################################
@@ -148,6 +148,7 @@ class DarkMap:
         """
         signed_tx = self.__create_payload_schema(shcema_name,version,confiured)
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        # return receipt['logs']
         return receipt['logs'][0]['topics'][1].hex()
     
     def sync_set_payload(self,hash_pid: HexBytes,payload: dict):
@@ -288,15 +289,50 @@ class DarkMap:
     ## PayloadSchema
     ##
     
+    def get_schema_hash_id(self,schema_name:str,schema_version:str):
+        """
+            Retrieves the hash of a payload schema by its name and version.
+
+            Parameters:
+                schema_name (str): The name of the payload schema.
+                schema_version (str): The version of the payload schema.
+
+            Returns:
+                str: The hash of the payload schema.
+        """
+        return '0x'+ self.payload_schema_db.caller.gen_schema_id(schema_name,schema_version).hex()
+    
     def get_payload_schema_by_hash(self,ps_id:bytes):
+        """
+            Retrieves the payload schema by its hash.
+
+            Parameters:
+                ps_id (str): The hash of the payload schema.
+
+            Returns:
+                PayloadSchema: The payload schema object.
+        """
         #entra bytes32 a conversao e feita pelo web3
         # assert dark_id.startswith('0x'), "id is not hash"
-        dark_object = self.dpid_db.caller.get_payload_schema(ps_id)
-        return PayloadSchema.populate(dark_object)
+        dark_object = self.payload_schema_service.caller.get(ps_id)
+        ps = PayloadSchema.populate(dark_object)
+        ps.set_id(ps_id)
+
+        return ps
     
-    def get_payload_schema_by_name(self,schema_name:str):
-        dark_object = self.dpid_db.caller.get_payload_schema(schema_name)
-        return PayloadSchema.populate(dark_object)
+    def get_payload_schema_by_name(self,schema_name:str,schema_version:str):
+        """
+            Retrieves the payload schema by its name and version.
+
+            Parameters:
+                schema_name (str): The name of the payload schema.
+                schema_version (str): The version of the payload schema.
+
+            Returns:
+                PayloadSchema: The payload schema object.
+        """
+        
+        return self.get_payload_schema_by_hash(self.get_schema_hash_id(schema_name,schema_version))
     
     ##
     ## Payload

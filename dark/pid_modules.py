@@ -191,12 +191,22 @@ class ExeternalPid:
         return vars(self)
     
 class PayloadSchema:
-    def __init__(self,schema_hash,schema_name:str,configured:bool) -> None:
+    def __init__(self,schema_hash,schema_name:str,schema_version:str,configured:bool) -> None:
         self.id = schema_hash
         self.schema_name = schema_name
-        self.attribute_list = []
+        self.schema_version = schema_version
         self.configured = configured
 
+    def set_id(self, schema_hash):
+        """
+        Sets the schema hash ID.
+
+        Args:
+            schema_hash (str): The schema hash ID to set.
+        """
+        self.id = schema_hash
+
+        
     def to_dict(self):
         """
         Converts the attributes of the class object into a dictionary.
@@ -207,18 +217,18 @@ class PayloadSchema:
         return vars(self)
     
     @staticmethod
-    def populate(dark_object):
+    def populate(payload_schema_object):
         # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
 
-        schema_name = dark_object[0].lower()
-        att_list = dark_object[1]
-        confa = dark_object[2]
+                
+        # string schema_name;
+        # string schema_version;
+        # bool configured;
+        schema_name = payload_schema_object[0]
+        schema_version = payload_schema_object[1]
+        configured = payload_schema_object[2]
         
-        ps = PayloadSchema('',schema_name,confa)
-        
-        if len(att_list) > 0:
-            for att in att_list:
-                ps.attribute_list.append(att.lower())
+        ps = PayloadSchema('',schema_name,schema_version,configured)
 
         return ps
 
