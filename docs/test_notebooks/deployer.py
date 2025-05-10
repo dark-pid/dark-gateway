@@ -291,10 +291,11 @@ class DarkDeployer:
                                                     dshoulder_prefix, self.dark_gateway.authority_addr)
         recipt_tx, tx_hash = invoke_contract_sync(self.dark_gateway,sign_tx)
         
-        logging.info('-----------------------------------------------------------')
-        logging.info(tx_hash.hex())
-        logging.info(recipt_tx)
-        logging.info('-----------------------------------------------------------')
+        # configurar DOI e OAI
+        # logging.info('-----------------------------------------------------------')
+        # logging.info(tx_hash.hex())
+        # logging.info(recipt_tx)
+        # logging.info('-----------------------------------------------------------')
 
         auth_id = recipt_tx['logs'][0]['topics'][1]
         logging.info("    Configuring a DNAM noid provider at {}".format(auth_id.hex()))

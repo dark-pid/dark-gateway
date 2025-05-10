@@ -81,7 +81,7 @@ class DarkGateway:
         self.__nonce_increment = 0
 
         ## payload
-        self.payload_schema_name =  blockchain_config['payload']['name']
+        # self.payload_schema_name =  blockchain_config['payload']['name']
         
 
     def is_deployed_contract_loaded(self):
