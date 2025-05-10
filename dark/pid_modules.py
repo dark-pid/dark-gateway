@@ -39,14 +39,15 @@ class DarkPid:
         if len(bc_output) != 6:
             return False
 
+        # checa pid_hash e ark_id
         if not isinstance(bc_output[0], bytes) or not isinstance(bc_output[1], str):
             return False
 
         if not isinstance(bc_output[2], list) or not isinstance(bc_output[3], bytes):
             return False
 
-        if not isinstance(bc_output[4], bytes):
-            return False
+        # if not isinstance(bc_output[4], bytes):
+        #     return False
 
         return True
 
