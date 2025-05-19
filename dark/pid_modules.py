@@ -4,7 +4,7 @@ from hexbytes.main import HexBytes
 
 class DarkPid:
 
-    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload:dict,owner) -> None:
+    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload,owner) -> None:
         
         if type(pid_hash) == HexBytes:
             self.pid_hash = pid_hash
@@ -24,7 +24,11 @@ class DarkPid:
         Returns:
             dict: A dictionary representation of the class object's attributes.
         """
-        return vars(self)
+        a = vars(self)
+        if type(self.payload) == Payload:
+        # if len(a['payload']) != 0:
+            a['payload'] = self.payload.to_dict()
+        return a
     
     def __is_bc_valid(bc_output):
         """
@@ -98,7 +102,7 @@ class DarkPid:
 
         payload = {}
         if payload_obj != None:
-            payload = payload_obj.attributes
+            payload = payload_obj
         #TODO: CRIAR O SCHEMA
 
         owner = dark_object[-1]
@@ -153,8 +157,6 @@ class DarkPid:
         # b'\x00' * 32 = 0
         if payload_hash != b'\x00' * 32:
             payload=''
-            print('0')
-            print(payload_hash)
         else:
             dp = DarkPid(pid_hash_id,pid_ark_id,external_pids,externa_url_list,'','')
             # self
@@ -206,7 +208,16 @@ class PayloadSchema:
         """
         self.id = schema_hash
 
-        
+    def get_id(self):
+        """
+        Gets the schema hash ID.
+
+        Returns:
+            str: The schema hash ID.
+        """
+        return self.id
+
+
     def to_dict(self):
         """
         Converts the attributes of the class object into a dictionary.
@@ -235,7 +246,12 @@ class PayloadSchema:
 class Payload:
     def __init__(self) -> None:
         self.payload_schema = None
-        self.attributes = None
+        self.ips_addr = None
+
+    def __init__(self,payload_schema:PayloadSchema,payload_addr) -> None:
+        self.payload_schema = payload_schema
+        self.payload_addr = payload_addr
+
 
     def to_dict(self):
         """
@@ -244,18 +260,20 @@ class Payload:
         Returns:
             dict: A dictionary representation of the class object's attributes.
         """
-        return vars(self)
+        tmp = {
+            'payload_schema' : self.payload_schema.to_dict(),
+            'payload_addr' : self.payload_addr
+        }
+        return tmp
+        # return vars(self)
     
-    @staticmethod
-    def populate(dark_object, payload_schema:PayloadSchema):
-        # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
-        att_value_list = dark_object[1]
-        
-        payload = Payload()
-        payload.payload_schema = payload_schema
-
-        payload.attributes = {}
-        for i in range(len(att_value_list)):
-            payload.attributes[payload_schema.attribute_list[i]] = att_value_list[i]
-
-        return payload
+    # @staticmethod
+    # def populate(dark_object, payload_schema:PayloadSchema):
+    #     # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
+    #     att_value_list = dark_object[1]
+    #     payload = Payload()
+    #     payload.payload_schema = payload_schema
+    #     payload.attributes = {}
+    #     for i in range(len(att_value_list)):
+    #         payload.attributes[payload_schema.attribute_list[i]] = att_value_list[i]
+    #     return payload

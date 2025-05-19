@@ -62,31 +62,20 @@ class DarkMap:
                                        'get_or_create_payload_schema',
                                        shcema_name, version, confiured)
    
-    def __set_payload(self,hash_pid: HexBytes,payload_schema, payload):
-        assert type(hash_pid) == HexBytes, "hash_pid must be a HexBytes object"
+    def __set_payload(self,pid_hash: HexBytes,payload_addr:bytes,payload_schema:bytes):
+        assert type(pid_hash) == HexBytes, "pid_hash must be a HexBytes object"
 
-        try:
-            payload_schema =  self.get_payload_schema_by_name(self.payload_schema_name)
-        except Exception as e:
-            raise Exception("Unable to retrieve the payload schema \n \t\t {}".format(e))
-        
-        # valida se todos os atributos do payload estao no schema
-        self.validade_payload(payload,payload_schema)
+        # function set_payload(bytes32 pid_hash,
+        #             bytes32 payload_schema,
+        #             bytes32 payload_hash)
 
-        signed_tx_set = []
+        signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', 
+                                            pid_hash,
+                                            HexBytes(payload_schema),
+                                            HexBytes(payload_addr)
+                                            )
         
-        for p in payload.keys():      
-            att_n = str(p.upper())
-            att_v = str(payload[p])
-            # print('{}:{}'.format(att_n,att_v))
-            # print('-----------')
-                        
-            # signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', hash_pid, att_n , att_v )
-            signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload_tmp', hash_pid,
-                                                payload_schema.schema_name, att_n , att_v )
-            signed_tx_set.append(signed_tx)
-        
-        return signed_tx_set      
+        return signed_tx      
     
 
     ###################################################################
@@ -151,13 +140,16 @@ class DarkMap:
         # return receipt['logs']
         return receipt['logs'][0]['topics'][1].hex()
     
-    def sync_set_payload(self,hash_pid: HexBytes,payload: dict):
+    def sync_set_payload(self,hash_pid: bytes, payload_addr: bytes, payload_schema: PayloadSchema):
         
-        tx_set = self.__set_payload(hash_pid,payload)
-        for signed_tx in tx_set:        
-            receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        signed_tx = self.__set_payload(hash_pid,payload_addr,payload_schema.get_id())
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        return receipt
+
+        # for signed_tx in tx_set:        
+        #     receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
         
-        return self.convert_pid_hash_to_ark(hash_pid)
+        # return self.convert_pid_hash_to_ark(hash_pid)
     
 
         
@@ -249,14 +241,14 @@ class DarkMap:
         """
         assert dark_id.startswith('0x'), "id is not hash"
         dark_object = self.dpid_db.caller.get(dark_id)
-        payload_hash = dark_object[-2]
-        # b'\x00' * 32 = 0
-        if payload_hash != b'\x00' * 32:
-            payload_py_obj = self.get_payload(payload_hash)
+        # Payload
+        raw_payload = dark_object[4]
+        if (raw_payload[0]!= b'\x00' * 32) and (raw_payload[1]!= b'\x00' * 32):
+            payload_schema = self.get_payload_schema_by_hash(raw_payload[0])
+            payload_py_obj = Payload(payload_schema=payload_schema,payload_addr=raw_payload[1])
         else:
             payload_py_obj = None
-        
-        # return DarkPid.populateDark(dark_object,self.epid_db,self.url_service)
+
         return DarkPid.populate(dark_object,self.epid_db,self.url_service,payload_py_obj)
 
     def get_pid_by_ark(self,dark_id):
@@ -271,17 +263,13 @@ class DarkMap:
         """
         dark_object = self.dpid_db.caller.get_by_noid(dark_id)
 
-        # TODO ALTERAR
-        payload_py_obj = None
-
-        # payload_hash = dark_object[-2]
-        # # b'\x00' * 32 = 0
-        # if payload_hash != b'\x00' * 32:
-        #     payload_py_obj = self.get_payload(payload_hash)
-        # else:
-        #     payload_py_obj = None
-        #     # Payload.populate(dark_object)
-
+        # Payload
+        raw_payload = dark_object[4]
+        if (raw_payload[0]!= b'\x00' * 32) and (raw_payload[1]!= b'\x00' * 32):
+            payload_schema = self.get_payload_schema_by_hash(raw_payload[0])
+            payload_py_obj = Payload(payload_schema=payload_schema,payload_addr=raw_payload[1])
+        else:
+            payload_py_obj = None
 
         return DarkPid.populate(dark_object,self.epid_db,self.url_service,payload_py_obj)
     
@@ -338,21 +326,29 @@ class DarkMap:
     ## Payload
     ##
 
-    def get_payload(self,payload_hash_id):
-        # assert dark_id.startswith('0x'), "id is not hash"
-        dark_object = self.dpid_db.caller.get_payload(Web3.to_hex(payload_hash_id))
-        payload_schema_hash_id = dark_object[0]
-        payload_schema = self.get_payload_schema_by_hash(payload_schema_hash_id)
-        return Payload.populate(dark_object,payload_schema)
+    def sync_set_payload(self,pid_hash: HexBytes,payload_addr:bytes,payload_schema:bytes):
+        """
+            Request a PID and return the hash (address) of the PID
+        """
+        signed_tx = self.__set_payload(pid_hash,payload_addr,payload_schema)
+        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        return r_tx
     
-    def validade_payload(self,payload: dict,payload_schema:PayloadSchema):
-        errors = []
-        for p in payload.keys():
-            if p.lower() not in payload_schema.attribute_list:
-                errors.append(p)
+    # def get_payload(self,payload_hash_id):
+    #     # assert dark_id.startswith('0x'), "id is not hash"
+    #     dark_object = self.dpid_db.caller.get_payload(Web3.to_hex(payload_hash_id))
+    #     payload_schema_hash_id = dark_object[0]
+    #     payload_schema = self.get_payload_schema_by_hash(payload_schema_hash_id)
+    #     return Payload.populate(dark_object,payload_schema)
+    
+    # def validade_payload(self,payload: dict,payload_schema:PayloadSchema):
+    #     errors = []
+    #     for p in payload.keys():
+    #         if p.lower() not in payload_schema.attribute_list:
+    #             errors.append(p)
         
-        if len(errors) > 0:
-            raise Exception(" Attributes {} not in PayloadSchema {}".format(errors,payload_schema.schema_name))
+    #     if len(errors) > 0:
+    #         raise Exception(" Attributes {} not in PayloadSchema {}".format(errors,payload_schema.schema_name))
 
 
 
