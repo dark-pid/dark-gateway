@@ -62,17 +62,19 @@ class DarkMap:
                                        'get_or_create_payload_schema',
                                        shcema_name, version, confiured)
    
-    def __set_payload(self,pid_hash: HexBytes,payload_addr:bytes,payload_schema:bytes):
+    def __set_payload(self,pid_hash:HexBytes,payload_schema:HexBytes,payload_addr):
         assert type(pid_hash) == HexBytes, "pid_hash must be a HexBytes object"
 
         # function set_payload(bytes32 pid_hash,
         #             bytes32 payload_schema,
         #             bytes32 payload_hash)
-
+        # print(type(pid_hash),type(payload_schema),type(payload_addr))
+        # print(payload_schema)
         signed_tx = self.gw.signTransaction(self.dpid_service , 'set_payload', 
                                             pid_hash,
-                                            HexBytes(payload_schema),
-                                            HexBytes(payload_addr)
+                                            # HexBytes(payload_schema),
+                                            payload_schema,
+                                            payload_addr
                                             )
         
         return signed_tx      
@@ -140,16 +142,11 @@ class DarkMap:
         # return receipt['logs']
         return receipt['logs'][0]['topics'][1].hex()
     
-    def sync_set_payload(self,hash_pid: bytes, payload_addr: bytes, payload_schema: PayloadSchema):
-        
-        signed_tx = self.__set_payload(hash_pid,payload_addr,payload_schema.get_id())
+    def sync_set_payload(self,hash_pid:HexBytes,payload_schema:HexBytes,payload_addr:str):
+        # def __set_payload(self,pid_hash:HexBytes,payload_schema:HexBytes,payload_addr):
+        signed_tx = self.__set_payload(hash_pid,payload_schema,payload_addr)
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
-        return receipt
-
-        # for signed_tx in tx_set:        
-        #     receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
-        
-        # return self.convert_pid_hash_to_ark(hash_pid)
+        return r_tx
     
 
         
@@ -183,27 +180,11 @@ class DarkMap:
         r_tx = invoke_contract_async(self.gw,signed_tx)
         return r_tx
     
-    def async_set_payload(self,hash_pid: HexBytes,payload: dict):
-        """
-        Asynchronously sets the payload of a PID.
-
-        Args:
-            hash_pid (HexBytes): The hash value of the PID.
-            pay_load (dict): The payload to be set.
-
-        Returns:
-            asyncio.Future: A future object that resolves to the transaction receipt.
-
-        Raises:
-            TypeError: If the hash_pid argument is not a HexBytes object.
-        """
-        signed_tx_set = self.__set_payload(hash_pid,payload)
-        tx_addr_set = []
-        for signed_tx in signed_tx_set:        
-            r_tx = invoke_contract_async(self.gw,signed_tx)
-            tx_addr_set.append(r_tx)
-    
-        return tx_addr_set #r_tx
+    def async_set_payload(self,hash_pid:HexBytes,payload_schema:HexBytes,payload_addr:str):
+        # def __set_payload(self,pid_hash:HexBytes,payload_schema:HexBytes,payload_addr):
+        signed_tx = self.__set_payload(hash_pid,payload_schema,payload_addr)
+        r_tx = invoke_contract_async(self.gw,signed_tx)
+        return r_tx
 
 
     ###################################################################
@@ -325,14 +306,6 @@ class DarkMap:
     ##
     ## Payload
     ##
-
-    def sync_set_payload(self,pid_hash: HexBytes,payload_addr:bytes,payload_schema:bytes):
-        """
-            Request a PID and return the hash (address) of the PID
-        """
-        signed_tx = self.__set_payload(pid_hash,payload_addr,payload_schema)
-        receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
-        return r_tx
     
     # def get_payload(self,payload_hash_id):
     #     # assert dark_id.startswith('0x'), "id is not hash"
