@@ -97,12 +97,20 @@ class DarkMap:
         dark_id = receipt['logs'][0]['topics'][1]
         return dark_id
     
-    def bulk_request_pid_hash(self):
+    def bulk_request_pid_hash(self,gas=3000000):
         """
             Request a PID and return the hash (address) of the PID
         """
-        signed_tx = self.gw.signTransaction(self.dpid_service , 'bulk_assingID', self.gw.authority_addr)
+        # orginal
+        # signed_tx = self.gw.signTransaction(self.dpid_service , 'bulk_assingID', self.gw.authority_addr)
+
+        #temp
+        tx_params = self.gw.get_tx_params(gas)
+        tx = self.dpid_service.get_function_by_name('bulk_assingID')(self.gw.authority_addr).build_transaction(tx_params)
+        signed_tx = self.gw.signTx(tx)
+
         receipt, r_tx = invoke_contract_sync(self.gw,signed_tx)
+        
         #retrieving pidhashs
         pid_hashes = []
         for i in range(len(receipt['logs'])):

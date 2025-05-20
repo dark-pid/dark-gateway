@@ -199,6 +199,19 @@ class DarkGateway:
         signed_tx = self.__account.sign_transaction(tx)
         return signed_tx
     
+    def signTx(self,tx):
+        """
+        Sign a transaction with the specified smart contract and method.
+
+        Args:
+            tx (Contract): The smart contract to interact with.
+
+        Returns:
+            Transaction: The signed transaction.
+        """
+        signed_tx = self.__account.sign_transaction(tx)
+        return signed_tx
+    
     ####
     #### transaction status
     ####
