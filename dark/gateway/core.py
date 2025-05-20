@@ -81,7 +81,7 @@ class DarkGateway:
         self.__nonce_increment = 0
 
         ## payload
-        self.payload_schema_name =  blockchain_config['payload']['name']
+        # self.payload_schema_name =  blockchain_config['payload']['name']
         
 
     def is_deployed_contract_loaded(self):
@@ -228,21 +228,29 @@ class DarkGateway:
     ### deploy contracts
     ###
     def deploy_contract_besu(self,contract_interface):
+        bytecode = contract_interface['bin']
+        if not bytecode.startswith('0x'):
+            bytecode = '0x' + bytecode
    
         sc = self.w3.eth.contract( abi=contract_interface['abi'],
-                                bytecode=contract_interface['bin']
+                                bytecode=bytecode
                                 )
+        tx_param = self.get_tx_params(2000000)
+        tx_const = sc.constructor().build_transaction(tx_param)
 
-        est_gas = sc.constructor().estimateGas()
-        tx_const = sc.constructor().buildTransaction(self.get_tx_params(est_gas))
-        signed_tx = self.__account.signTransaction(tx_const)
-        tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        # signed_tx = self.__account.signTransaction(tx_const)
+        signed_tx = self.__account.sign_transaction(tx_const)
+        # tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
 
         tx_receipt = None
-        tx_receipt = self.w3.eth.waitForTransactionReceipt(tx_hash)
+        # tx_receipt = self.w3.eth.waitForTransactionReceipt(tx_hash)
+        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        if tx_receipt['status'] != 1:
+            raise RuntimeError('Transaction failed')
 
         return tx_receipt['contractAddress']
-    
+
     ###
     ### private methods
     ###
@@ -251,7 +259,7 @@ class DarkGateway:
         return self.__blockchain_net_config
     
     def get_account_balance(self):
-        return Web3.fromWei(self.w3.eth.get_balance(self.__account.address),'ether')
+        return Web3.from_wei(self.w3.eth.get_balance(self.__account.address),'ether')
 
     ###
     ### static methods

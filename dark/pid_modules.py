@@ -4,7 +4,7 @@ from hexbytes.main import HexBytes
 
 class DarkPid:
 
-    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload:dict,owner) -> None:
+    def __init__(self,pid_hash,ark_id,externa_pid_list,externa_url_list,payload,owner) -> None:
         
         if type(pid_hash) == HexBytes:
             self.pid_hash = pid_hash
@@ -24,7 +24,11 @@ class DarkPid:
         Returns:
             dict: A dictionary representation of the class object's attributes.
         """
-        return vars(self)
+        a = vars(self)
+        if type(self.payload) == Payload:
+        # if len(a['payload']) != 0:
+            a['payload'] = self.payload.to_dict()
+        return a
     
     def __is_bc_valid(bc_output):
         """
@@ -39,14 +43,15 @@ class DarkPid:
         if len(bc_output) != 6:
             return False
 
+        # checa pid_hash e ark_id
         if not isinstance(bc_output[0], bytes) or not isinstance(bc_output[1], str):
             return False
 
         if not isinstance(bc_output[2], list) or not isinstance(bc_output[3], bytes):
             return False
 
-        if not isinstance(bc_output[4], bytes):
-            return False
+        # if not isinstance(bc_output[4], bytes):
+        #     return False
 
         return True
 
@@ -97,7 +102,7 @@ class DarkPid:
 
         payload = {}
         if payload_obj != None:
-            payload = payload_obj.attributes
+            payload = payload_obj
         #TODO: CRIAR O SCHEMA
 
         owner = dark_object[-1]
@@ -152,8 +157,6 @@ class DarkPid:
         # b'\x00' * 32 = 0
         if payload_hash != b'\x00' * 32:
             payload=''
-            print('0')
-            print(payload_hash)
         else:
             dp = DarkPid(pid_hash_id,pid_ark_id,external_pids,externa_url_list,'','')
             # self
@@ -190,11 +193,30 @@ class ExeternalPid:
         return vars(self)
     
 class PayloadSchema:
-    def __init__(self,schema_hash,schema_name:str,configured:bool) -> None:
+    def __init__(self,schema_hash,schema_name:str,schema_version:str,configured:bool) -> None:
         self.id = schema_hash
         self.schema_name = schema_name
-        self.attribute_list = []
+        self.schema_version = schema_version
         self.configured = configured
+
+    def set_id(self, schema_hash):
+        """
+        Sets the schema hash ID.
+
+        Args:
+            schema_hash (str): The schema hash ID to set.
+        """
+        self.id = schema_hash
+
+    def get_id(self):
+        """
+        Gets the schema hash ID.
+
+        Returns:
+            str: The schema hash ID.
+        """
+        return self.id
+
 
     def to_dict(self):
         """
@@ -206,25 +228,30 @@ class PayloadSchema:
         return vars(self)
     
     @staticmethod
-    def populate(dark_object):
+    def populate(payload_schema_object):
         # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
 
-        schema_name = dark_object[0].lower()
-        att_list = dark_object[1]
-        confa = dark_object[2]
+                
+        # string schema_name;
+        # string schema_version;
+        # bool configured;
+        schema_name = payload_schema_object[0]
+        schema_version = payload_schema_object[1]
+        configured = payload_schema_object[2]
         
-        ps = PayloadSchema('',schema_name,confa)
-        
-        if len(att_list) > 0:
-            for att in att_list:
-                ps.attribute_list.append(att.lower())
+        ps = PayloadSchema('',schema_name,schema_version,configured)
 
         return ps
 
 class Payload:
     def __init__(self) -> None:
         self.payload_schema = None
-        self.attributes = None
+        self.ips_addr = None
+
+    def __init__(self,payload_schema:PayloadSchema,payload_addr) -> None:
+        self.payload_schema = payload_schema
+        self.payload_addr = payload_addr
+
 
     def to_dict(self):
         """
@@ -233,18 +260,20 @@ class Payload:
         Returns:
             dict: A dictionary representation of the class object's attributes.
         """
-        return vars(self)
+        tmp = {
+            'payload_schema' : self.payload_schema.to_dict(),
+            'payload_addr' : self.payload_addr
+        }
+        return tmp
+        # return vars(self)
     
-    @staticmethod
-    def populate(dark_object, payload_schema:PayloadSchema):
-        # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
-        att_value_list = dark_object[1]
-        
-        payload = Payload()
-        payload.payload_schema = payload_schema
-
-        payload.attributes = {}
-        for i in range(len(att_value_list)):
-            payload.attributes[payload_schema.attribute_list[i]] = att_value_list[i]
-
-        return payload
+    # @staticmethod
+    # def populate(dark_object, payload_schema:PayloadSchema):
+    #     # assert DarkPid.__is_bc_valid(dark_object) == True, "Invalid Blockchain Output"
+    #     att_value_list = dark_object[1]
+    #     payload = Payload()
+    #     payload.payload_schema = payload_schema
+    #     payload.attributes = {}
+    #     for i in range(len(att_value_list)):
+    #         payload.attributes[payload_schema.attribute_list[i]] = att_value_list[i]
+    #     return payload
